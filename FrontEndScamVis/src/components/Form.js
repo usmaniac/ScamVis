@@ -39,7 +39,13 @@ function Form() {
         // send data away to api
         console.log(data)
         console.log("coin is:",state.coin)
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${data.Price}&v_thresh=${data.Volume}&coin=${state.coin}`)
+
+        // converting percentage ie 10% to 1.1
+        let percentage = data.Price
+        let newPriceThresh = percentage/100 + 1
+        console.log("newPrice is:", newPriceThresh)
+
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${data.Volume}&coin=${state.coin}`)
         let x2 = await Promise.resolve(x)
 
         console.log("x2:",x2)
@@ -84,7 +90,7 @@ function Form() {
                 </Row> */}
                 
                 <Row style={{display:'initial'}}>
-                <label style={{fontSize:'1.3em'}} > Price Increase: </label>
+                <label style={{fontSize:'1.3em'}} > Price Increase (%): </label>
                 <br/>
                 <input style ={{fontSize:'1.5em'}} type="text" placeholder="Price" name="Price" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Price must be a numeric value"}})}/>
                 </Row>
@@ -123,7 +129,7 @@ function Form() {
 
         
     
-        <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin}></PdVisuals>
+        {/* <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin}></PdVisuals> */}
     </>
     )
 }
