@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useForm } from "react-hook-form";
 import Select from 'react-select';
@@ -21,7 +21,9 @@ function Form() {
     const [state, setState] = useState({
         coin:"DENT-BTC",
         data: [],
-        anomalies: []
+        anomalies: [],
+        priceParam:'30',
+        volumeParam: '400'  
     })
     
     const handleChange = selectedoption => {
@@ -30,8 +32,30 @@ function Form() {
         data: []})
     }
 
-    
+    // Runs for changes in 'state'
     useEffect(() => console.log(state), [state]);  // to print out the state
+
+    // Run once on startup, ie empty dependency array
+    useEffect(() => {
+        // 30% -> 1.3
+        async function onStartup(){
+        let percentage = state.priceParam
+        let newPriceThresh = percentage/100 + 1
+
+        let newVolume = (state.volumeParam)/100
+
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}`)
+        let x2 = await Promise.resolve(x)
+
+        console.log("x2:",x2)
+        console.log("x2.data:", x2.data)
+
+        setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
+            priceParam:percentage, volumeParam: state.volumeParam })
+        }
+        onStartup()
+    }, [])
+
 
 
     const {register, handleSubmit, errors} = useForm();
@@ -43,17 +67,17 @@ function Form() {
         // converting percentage ie 10% to 1.1
         let percentage = data.Price
         let newPriceThresh = percentage/100 + 1
+        let newVolume = (data.Volume)/100
         console.log("newPrice is:", newPriceThresh)
 
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${data.Volume}&coin=${state.coin}`)
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}`)
         let x2 = await Promise.resolve(x)
 
         console.log("x2:",x2)
         console.log("x2.data:", x2.data)
-        // JSON.parse(JSON.stringify(userData))
-        // x2.data is an object
-        // x2.data.data is a json string not an object
-        setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies })  // not setting the data, setstate is async
+
+        setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
+            priceParam:percentage, volumeParam: data.Volume })  
         
     } 
     
@@ -62,8 +86,6 @@ function Form() {
 
 
     return (
-
-        
         <>
         <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
             Modify Coin and Anomaly Parameters
@@ -97,7 +119,7 @@ function Form() {
             
 
                 <Row style={{display:'initial'}}>
-                <label style={{fontSize:'1.3em'}}> Volume Increase:  </label>
+                <label style={{fontSize:'1.3em'}}> Volume Increase (%):  </label>
                 <br/>
                 <input  style ={{fontSize:'1.5em'}} type="text" placeholder="Volume" name="Volume" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Volume must be a numeric value"}})}/>
                 </Row>
@@ -120,16 +142,9 @@ function Form() {
             </Button>
             </Modal.Footer>
         </Modal>
-
-
-
-
-
-
-
         
     
-        {/* <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin}></PdVisuals> */}
+        <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></PdVisuals>
     </>
     )
 }

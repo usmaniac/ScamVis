@@ -83,9 +83,10 @@ let dataSource = {
 
 function PdVisuals(props) {
 
-    // console.log("props:", props)
-    console.log("props.anomalies:", props.anomalies)
-    // console.log("props.data:", props.data)
+    console.log("props.coin:", props.coin)
+    console.log("price params:",props.priceParam)
+    console.log("volume param:",props.volumeParam)
+    console.log("anomalies:", props.anomalies)
    
     const [state, setState] = useState({
         timeSeriesList: [], 
@@ -113,15 +114,13 @@ function PdVisuals(props) {
     }
    
     useEffect(() => {
-      async function getCharacters() {
+      async function fillAnomalyList() {
         if(props.anomalies && props.anomalies.length > 0){
-          // setItems(props.anomalies.map((response ) => ({ label: response, value: response })));
           setItems(
             props.anomalies.map((response ) => ({ label: response[0], value: response[1] })),
           );
         } else {
           console.log("props.anomalies is empty using default values")
-
         }
       }
 
@@ -132,7 +131,6 @@ function PdVisuals(props) {
         // all_data = props.data
         // props.anomalies = "anomalies": [ ["Fri, 22 Mar 2019 12:15:00 GMT", 7729] ]
         let newdata
-        // selected = parseInt(selected)
         if (selected) {
           let increment = 100
           let end = parseInt(selected) + increment
@@ -146,7 +144,23 @@ function PdVisuals(props) {
           console.log("start", start, " end:", end, " last index:", props.data.length-1)
           newdata = props.data.slice(start,end)
           console.log("newdata: ", newdata)
-        } else {
+        }
+        else if(props.anomalies.length > 0){
+          let defaultSelected = parseInt(props.anomalies[0][1])
+          let increment = 100
+          let end = parseInt(defaultSelected) + increment
+          let start = parseInt(defaultSelected) - increment
+          if (parseInt(defaultSelected)-increment < 0) {
+              start = 0
+          }
+          if (end > parseInt(props.data.length - 1)) {
+              end = parseInt(props.data.length - 1)
+          }
+          console.log("start", start, " end:", end, " last index:", props.data.length-1)
+          newdata = props.data.slice(start,end)
+          console.log("newdata: ", newdata)
+        }
+        else {
           newdata = jsondata
         }
 
@@ -168,7 +182,7 @@ function PdVisuals(props) {
         });   
       }
 
-      getCharacters();
+      fillAnomalyList();
       onFetchData();
     }, [props.anomalies, selected]); //added props.all_data.anomalies to dependency array
 
@@ -202,10 +216,8 @@ function PdVisuals(props) {
     
     return (
     <div> 
-      <br/>
-
-      <div style={{fontSize:'1.5em'}}>
-      Anomaly Dates and Times List: &nbsp;
+      <div style={{fontSize:'1.5em', position:'absolute',right:'1.5em'}}>
+      Anomaly Dates/Times ({props.priceParam}% price increase, {props.volumeParam}% volume increase): &nbsp;
       <select onChange={e => setSelected(e.currentTarget.value)} >
         {/* {console.log("items:", items)} */}
         {items && items.map(item => (
