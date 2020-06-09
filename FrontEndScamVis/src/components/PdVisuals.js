@@ -6,7 +6,7 @@ import ReactFC from "react-fusioncharts";
 // Data tests
 import jsondata from '../usmanTempData.json'
 import tempdata from '../tempdata2.json'
-import {  Row, Col, Container, } from 'react-bootstrap';
+import { Accordion, Card, Button } from 'react-bootstrap';
 
 
 
@@ -81,26 +81,25 @@ let dataSource = {
 
 
 
+
+
 function PdVisuals(props) {
 
-    console.log("props.coin:", props.coin)
-    console.log("price params:",props.priceParam)
-    console.log("volume param:",props.volumeParam)
+    // console.log("props.coin:", props.coin)
+    // console.log("price params:",props.priceParam)
+    // console.log("volume param:",props.volumeParam)
     console.log("anomalies:", props.anomalies)
+    console.log("dates:", props.dates )
    
     const [state, setState] = useState({
         timeSeriesList: [], 
     })
-
+   
  
     const [items, setItems] = useState(
       [{
-        label: "2nd Jan 2019",
+        label: "no results found for given parameters showing default view",
         value: "2nd Jan 2019"
-      },
-      {
-        label: "5th March 2019",
-        value: "5th March 2019"
       }],
     );
     const[selected, setSelected] = useState("")
@@ -115,10 +114,18 @@ function PdVisuals(props) {
    
     useEffect(() => {
       async function fillAnomalyList() {
+        
         if(props.anomalies && props.anomalies.length > 0){
+          let from = props.dates[0]
+          let to = props.dates[1]
+          let all_dates_in_range = props.anomalies.filter(val => {
+            return new Date(val[0]) >= from && new Date(val[0]) <= to
+          })
+          console.log("all dates in range:", all_dates_in_range)
           setItems(
-            props.anomalies.map((response ) => ({ label: response[0], value: response[1] })),
+            all_dates_in_range.map((response ) => ({ label: response[0], value: response[1] })),
           );
+
         } else {
           console.log("props.anomalies is empty using default values")
         }
@@ -145,7 +152,7 @@ function PdVisuals(props) {
           newdata = props.data.slice(start,end)
           console.log("newdata: ", newdata)
         }
-        else if(props.anomalies.length > 0){
+        else if(props.anomalies && props.anomalies.length > 0){ //default values
           let defaultSelected = parseInt(props.anomalies[0][1])
           let increment = 100
           let end = parseInt(defaultSelected) + increment
@@ -159,11 +166,11 @@ function PdVisuals(props) {
           console.log("start", start, " end:", end, " last index:", props.data.length-1)
           newdata = props.data.slice(start,end)
           console.log("newdata: ", newdata)
-        }
-        else {
-          newdata = jsondata
-        }
 
+        }
+        else { //if backend completely down use the backup dataset
+          newdata = jsondata 
+        }
 
 
         const schema = schemaTop;
@@ -216,8 +223,32 @@ function PdVisuals(props) {
     
     return (
     <div> 
-      <div style={{fontSize:'1.5em', position:'absolute',right:'1.5em'}}>
-      Anomaly Dates/Times ({props.priceParam}% price increase, {props.volumeParam}% volume increase): &nbsp;
+      <div style={{fontSize:'1.5em', marginLeft:'70em'}}>
+      {/* Anomaly Dates/Times ({props.priceParam}% price increase, {props.volumeParam}% volume increase): &nbsp; */}
+      <Accordion defaultActiveKey="1">
+      <Card>
+        <Card.Header>
+          <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
+            Click to see current paramaters
+          </Accordion.Toggle>
+        </Card.Header>
+        <Accordion.Collapse eventKey="0">
+          <Card.Body style={{fontSize:'0.8em'}}>
+            <div>Coin: {props.coin} </div>
+            <div>Date Range: From {props.dates[0].toString()} to {props.dates[1].toString()}</div>
+            <div>Price Increase: {props.priceParam}%</div>
+            <div>Volume Increase: {props.volumeParam}%</div>
+          </Card.Body>
+        </Accordion.Collapse>
+       </Card>
+      </Accordion>
+
+
+
+
+
+      
+      Anomaly List:
       <select onChange={e => setSelected(e.currentTarget.value)} >
         {/* {console.log("items:", items)} */}
         {items && items.map(item => (

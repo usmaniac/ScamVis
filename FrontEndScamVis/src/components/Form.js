@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useForm } from "react-hook-form";
 import Select from 'react-select';
-import DateRangePicker from './DateRangePicker';
 import {  Row, Col, Container, } from 'react-bootstrap';
 import PdVisuals from './PdVisuals';
 import {Modal, Button} from 'react-bootstrap'
+import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 
 
 
@@ -17,6 +17,8 @@ function Form() {
     const [show, setShow] = useState(false);
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
+    const [dateValueArray, onChangeDate] = useState([new Date(2019, 0, 1), new Date()]);
+
 
     const [state, setState] = useState({
         coin:"DENT-BTC",
@@ -34,6 +36,7 @@ function Form() {
 
     // Runs for changes in 'state'
     useEffect(() => console.log(state), [state]);  // to print out the state
+    useEffect(() => console.log("date values is:", dateValueArray), [dateValueArray]);
 
     // Run once on startup, ie empty dependency array
     useEffect(() => {
@@ -81,10 +84,6 @@ function Form() {
         
     } 
     
-  
-
-
-
     return (
         <>
         <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
@@ -99,17 +98,24 @@ function Form() {
                 <Modal.Body>
                 <form onSubmit={handleSubmit(onSubmit)}>
                 
+
                 <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
                     <label style={{fontSize:'1.3em'}} > Coin: </label>
                     <div style={{fontSize:'1.5em'}}>
                     <Select  ref={register} options={coins} onChange={handleChange} name="Coin"/>
                     </div>
                 </Row>
-                
-                {/* <Row style={{paddingLeft:'2em', paddingRight:'2em'}} >
-                    <label> Date Range: </label>
-                    <DateRangePicker />
-                </Row> */}
+
+                <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
+                    <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
+                    <DateTimeRangePicker
+                        onChange={onChangeDate}
+                        value={dateValueArray}
+                        minDate={new Date(2019, 0, 1)}
+                        maxDate={new Date()}
+                    />
+                </Row>
+
                 
                 <Row style={{display:'initial'}}>
                 <label style={{fontSize:'1.3em'}} > Price Increase (%): </label>
@@ -123,9 +129,13 @@ function Form() {
                 <br/>
                 <input  style ={{fontSize:'1.5em'}} type="text" placeholder="Volume" name="Volume" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Volume must be a numeric value"}})}/>
                 </Row>
+
+                
                             
                 {errors.Price && <p>{errors.Price.message}</p>}
                 {errors.Volume && <p>{errors.Volume.message}</p>}
+
+
 
                 <input style={{marginTop:'2em', fontSize:'1.5em'}} type="submit" onClick={handleClose}/>
             </form>
@@ -144,7 +154,8 @@ function Form() {
         </Modal>
         
     
-        <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></PdVisuals>
+        <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin} 
+        priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray}></PdVisuals>
     </>
     )
 }
