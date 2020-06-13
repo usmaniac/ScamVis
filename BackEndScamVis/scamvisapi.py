@@ -94,7 +94,7 @@ def add_RA(df,win_size,col,name):
     df[name] = pd.Series.rolling(df[col],window=win_size,center=False).mean()
 
 
-def load_csv(f_path,suppress=True):
+def load_csv(f_path,interval,suppress=True,):
     '''suppress : suppress output of the exchange and symbol name'''
     
     # df = pd.read_csv(f_path,index_col=0,parse_dates=["open_time"])
@@ -117,8 +117,10 @@ def load_csv(f_path,suppress=True):
     'close': 'last',                                                                                                    
     'volume': 'sum'
     }
- 
-    df = df.resample('15T').agg(ohlc_dict).bfill()
+    
+    print("interval is:", interval)
+
+    df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
     print("df head:", df.head())
     df.reset_index(inplace=True)
 
@@ -269,7 +271,7 @@ def plot_pumps(symbol_name,exchange_name,win_size,df,p_spike_df,v_spike_df,vp_co
 
 
 
-def analyse_symbol(f_path,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):  
+def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plot=False):  
     '''
     USAGE:
     f_path : path to OHLCV csv e.g.'../data/binance/binance_STORJ-BTC_[2018-04-20 00.00.00]-TO-[2018-05-09 23.00.00].csv'
@@ -279,7 +281,7 @@ def analyse_symbol(f_path,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):
     win_size : size of the window for the rolling average, in hours
     '''
     # -- load the data --
-    exchange_name,symbol_name,df = load_csv(f_path)
+    exchange_name,symbol_name,df = load_csv(f_path, interval)
 
 
     print("df returnd from laod_csv: ", df)
@@ -327,15 +329,13 @@ def analyse_symbol(f_path,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):
     return (df,final_combined,row_entry)
 
 
-def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, dateRangeA = None, dateRangeB = None):
+def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
     
     v_thresh = float(v_thresh)
     p_thresh = float(p_thresh)
 
-    original_df, pumpdf, row_entry = analyse_symbol(f'../compressedBTCpairs/{coin}.csv',v_thresh, p_thresh, win_size = 240,c_size = '1m', plot=False)
-
-    if dateRangeA:
-        print("modified version of original df needed")
+    original_df, pumpdf, row_entry = analyse_symbol(f'../compressedBTCpairs/{coin}.csv',v_thresh, p_thresh, interval, win_size = 240,
+    c_size = '1m', plot=False)
 
     # get the indices of our pumpdf
     index_first = list(pumpdf.index.values)
@@ -361,7 +361,7 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, dateRangeA = None, dateR
     increment = 100
 
     if index_list:
-        ####### working section #######
+        ####### working section for printing purposes only #######
         # end = index_list[i]+increment
         # start = index_list[i]-increment
         # if int(index_list[i])-increment < 0:
@@ -370,7 +370,8 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, dateRangeA = None, dateR
         #     end = original_df.index[-1]
 
         # temp_df =  original_df.iloc[start:end]  #intraday data
-
+        # fig = px.line(temp_df, x='open_time', y='high')
+        # fig.show()
 
         # to_json_data = temp_df[['open_time','open','high','low','close','volume']]
         ##########
@@ -394,7 +395,9 @@ def get_anomalies():
     coin = request.args.get('coin')
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
-    x = my_func(coin, v_thresh, p_thresh)
+    interval = request.args.get('interval')
+    x = my_func(coin, v_thresh, p_thresh,interval)
   
     return ({'data':x[0], 'anomalies': x[1] })
 
+##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!!

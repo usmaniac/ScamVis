@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Component } from 'react'
 import FusionCharts from "fusioncharts";
 import TimeSeries from "fusioncharts/fusioncharts.timeseries";
 import ReactFC from "react-fusioncharts";
 
 // Data tests
 import jsondata from '../usmanTempData.json'
-import tempdata from '../tempdata2.json'
 import { Accordion, Card, Button } from 'react-bootstrap';
+
 
 
 
@@ -85,9 +85,6 @@ let dataSource = {
 
 function PdVisuals(props) {
 
-    // console.log("props.coin:", props.coin)
-    // console.log("price params:",props.priceParam)
-    // console.log("volume param:",props.volumeParam)
     console.log("anomalies:", props.anomalies)
     console.log("dates:", props.dates )
    
@@ -103,6 +100,11 @@ function PdVisuals(props) {
       }],
     );
     const[selected, setSelected] = useState("")
+    const[style, setStyle] = useState("Candlestick")
+
+    useEffect(() => {
+      console.log("style is:", style)
+    }, [style])
     
     const vizProperties = {
       type: "timeseries",
@@ -132,11 +134,6 @@ function PdVisuals(props) {
       }
 
       function onFetchData() {
-
-        // may have to make this async (keep in mind)
-        // replace json data 
-        // all_data = props.data
-        // props.anomalies = "anomalies": [ ["Fri, 22 Mar 2019 12:15:00 GMT", 7729] ]
         let newdata
         if (selected) {
           let increment = 100
@@ -183,6 +180,25 @@ function PdVisuals(props) {
         
         timeseriesDs.dataSource.caption.text = `${props.coin} Price`
         timeseriesDs.dataSource.data = fusionTable;
+
+        // Add in style features here 
+        if(style === 'Line') {
+          timeseriesDs.dataSource.yaxis[0]['plot'] = [{value:'Close', type:"smooth-line"}]
+        } else{
+          console.log("the plot is:", timeseriesDs.dataSource.yaxis[0]['plot'])
+          timeseriesDs.dataSource.yaxis[0]['plot'] = [
+            {
+              value: {
+                open: "Open",
+                high: "High",
+                low: "Low",
+                close: "Close"
+              },
+              type: "candlestick"
+            }
+          ]
+        }
+
             
         setState({
           timeSeriesList: [timeseriesDs]
@@ -191,7 +207,7 @@ function PdVisuals(props) {
 
       fillAnomalyList();
       onFetchData();
-    }, [props.anomalies, selected]); //added props.all_data.anomalies to dependency array
+    }, [props.anomalies, selected, style]); //added props.all_data.anomalies to dependency array
 
     useEffect(() => {
       console.log("item selected:", selected)      
@@ -223,9 +239,9 @@ function PdVisuals(props) {
     
     return (
     <div> 
-      <div style={{fontSize:'1.5em', marginLeft:'70em'}}>
-      {/* Anomaly Dates/Times ({props.priceParam}% price increase, {props.volumeParam}% volume increase): &nbsp; */}
-      <Accordion defaultActiveKey="1">
+      
+      <div style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}>
+      <Accordion defaultActiveKey="1" style={{float:'left', width:'70%'}}>
       <Card>
         <Card.Header>
           <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
@@ -238,29 +254,39 @@ function PdVisuals(props) {
             <div>Date Range: From {props.dates[0].toString()} to {props.dates[1].toString()}</div>
             <div>Price Increase: {props.priceParam}%</div>
             <div>Volume Increase: {props.volumeParam}%</div>
+            <div> Interval: {props.interval} minutes </div>
           </Card.Body>
         </Accordion.Collapse>
        </Card>
       </Accordion>
 
-
-
-
-
-      
-      Anomaly List:
-      <select onChange={e => setSelected(e.currentTarget.value)} >
-        {/* {console.log("items:", items)} */}
-        {items && items.map(item => (
-          <option key={item.value} value={item.value} > 
-            {item.label}
-          </option>
-        ))}
-      </select>
+      <div style={{float:'left', fontSize:'0.95em', width:'30%', height:'100%', padding:'.75rem 1.15rem'}} >
+        <select className="browser-default custom-select" style={{fontSize:'0.95em'}} onChange={e => setStyle(e.currentTarget.value)}>
+          <option value="Candlestick">Select style </option>
+          <option value="Candlestick">Candlestick</option>
+          <option value="Line">Line</option>
+        </select>
       </div>
 
+
+
+      <div style={{float:'left'}}>
+      Anomaly List: 
+        <select className="browser-default custom-select" onChange={e => setSelected(e.currentTarget.value)} style={{fontSize:'0.95em', width:'75%', marginBottom:'1px'}}>
+          {/* {console.log("items:", items)} */}
+          {items && items.map(item => (
+            <option key={item.value} value={item.value} > 
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      </div>
+    
       {fincomponent}
     </div>
+    
     )
 
     
