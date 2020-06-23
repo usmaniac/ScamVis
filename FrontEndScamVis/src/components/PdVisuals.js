@@ -62,7 +62,7 @@ let dataSource = {
       format: {
         prefix: "$"
       },
-      title: "Stock Price"
+      title: "Stock Price (BTC)"
     },
     {
       plot: [
@@ -87,6 +87,11 @@ function PdVisuals(props) {
 
     console.log("anomalies:", props.anomalies)
     console.log("dates:", props.dates )
+
+    //Date Range: From {props.dates[0].toString()} to {props.dates[1].toString()}
+
+
+
    
     const [state, setState] = useState({
         timeSeriesList: [], 
@@ -240,51 +245,51 @@ function PdVisuals(props) {
     return (
     <div> 
       
-      <div style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}>
-      <Accordion defaultActiveKey="1" style={{float:'left', width:'70%'}}>
-      <Card>
-        <Card.Header>
-          <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
-            Click to see current paramaters
-          </Accordion.Toggle>
-        </Card.Header>
-        <Accordion.Collapse eventKey="0">
-          <Card.Body style={{fontSize:'0.8em'}}>
-            <div>Coin: {props.coin} </div>
-            <div>Date Range: From {props.dates[0].toString()} to {props.dates[1].toString()}</div>
-            <div>Price Increase: {props.priceParam}%</div>
-            <div>Volume Increase: {props.volumeParam}%</div>
-            <div> Interval: {props.interval} minutes </div>
-          </Card.Body>
-        </Accordion.Collapse>
-       </Card>
-      </Accordion>
+      <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}>
+        <Accordion defaultActiveKey="1" style={{float:'left', width:'70%'}}>
+        <Card>
+          <Card.Header>
+            <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
+              Click to see current paramaters
+            </Accordion.Toggle>
+          </Card.Header>
+          <Accordion.Collapse eventKey="0">
+            <Card.Body style={{fontSize:'0.8em'}}>
+              <div>Coin: {props.coin} </div>
+              <div>Date Range: From {props.dates[0].toString().replace("Australian Eastern Daylight Time", "AEDT")} to {props.dates[1].toString().replace("Australian Eastern Standard Time", "AEST")}</div>
+              <div>Price Increase: {props.priceParam}%</div>
+              <div>Volume Increase: {props.volumeParam}%</div>
+              <div> Interval: {props.interval} minutes </div>
+            </Card.Body>
+          </Accordion.Collapse>
+        </Card>
+        </Accordion>
 
-      <div style={{float:'left', fontSize:'0.95em', width:'30%', height:'100%', padding:'.75rem 1.15rem'}} >
-        <select className="browser-default custom-select" style={{fontSize:'0.95em'}} onChange={e => setStyle(e.currentTarget.value)}>
-          <option value="Candlestick">Select style </option>
-          <option value="Candlestick">Candlestick</option>
-          <option value="Line">Line</option>
-        </select>
-      </div>
+        <div style={{float:'left', fontSize:'0.95em', width:'30%', height:'100%', padding:'.75rem 1.15rem'}} >
+          <select className="browser-default custom-select" style={{fontSize:'0.95em'}} onChange={e => setStyle(e.currentTarget.value)}>
+            <option value="Candlestick">Select style </option>
+            <option value="Candlestick">Candlestick</option>
+            <option value="Line">Line</option>
+          </select>
+        </div>
+        
 
 
+        <div style={{float:'left', width:'40%'}}> Anomaly List: </div>
 
-      <div style={{float:'left'}}>
-      Anomaly List: 
-        <select className="browser-default custom-select" onChange={e => setSelected(e.currentTarget.value)} style={{fontSize:'0.95em', width:'75%', marginBottom:'1px'}}>
-          {/* {console.log("items:", items)} */}
+        <select className="browser-default custom-select" onChange={e => setSelected(e.currentTarget.value)} style={{float:'left', width:'60%', fontSize:'0.95em', marginBottom:'1px'}}>
           {items && items.map(item => (
             <option key={item.value} value={item.value} > 
               {item.label}
             </option>
           ))}
         </select>
+      
       </div>
 
-      </div>
-    
-      {fincomponent}
+      
+      
+        {fincomponent}
     </div>
     
     )

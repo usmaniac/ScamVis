@@ -92,7 +92,6 @@ function Form() {
             Modify Coin and Anomaly Parameters
         </Button>
         
-
             <Modal style={{opacity:1}} show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                 <Modal.Title> Coin and anomaly parameters  </Modal.Title>
@@ -150,17 +149,18 @@ function Form() {
 
 
 
-                <input style={{marginTop:'2em', fontSize:'1.5em'}} type="submit" onClick={handleClose}/>
+                <input style={{marginTop:'2em', fontSize:'1.5em'}} type="submit" onClick={handleClose} value="Analyse"/>
+                <Button variant="secondary" onClick={handleClose} style={{marginLeft:'1em', padding:'1px 6px', marginBottom:'0.3em', height:'2em', fontSize:'1.35em'}}>
+                    Close
+                </Button>
             </form>
 
 
 
             </Modal.Body>
-            <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
-                Close
-            </Button>
-            </Modal.Footer>
+            {/* <Modal.Footer> */}
+            
+            {/* </Modal.Footer> */}
         </Modal>
         
     
