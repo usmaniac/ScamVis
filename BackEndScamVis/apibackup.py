@@ -21,8 +21,17 @@ from flask import jsonify, make_response
 
 from datetime import datetime
 import mplfinance as mpf
-import psycopg2
 
+
+
+
+#plotting
+from bokeh.plotting import figure, show, output_file
+from bokeh.io import export_svgs
+from bokeh.io import output_notebook
+from bokeh.models import Axis, ColumnDataSource
+from bokeh.layouts import gridplot
+from bokeh.plotting import figure
 
 
 # gets symbol name from the csv file
@@ -31,6 +40,25 @@ def get_symbol(f_path):
     symbol_name = f_path.split('/')[-1].replace('.csv','')
     return symbol_name
 
+
+# extracts the symbol pairs and stores them in a df per exchange (not sure if needed for our exchange only have binance data)
+def extract_symbol_df_from_csvs(folder):
+    for subdir, dirs, files in os.walk(folder):
+        symbols = []
+        
+        exchange_n = 'Binance'
+        
+        for file in files:
+            if ".csv" in file:
+                f = file.split('-')
+                symbols.append(f[0]+'/'+f[1].replace('.csv',''))
+        header = ['Symbol']
+        df = pd.DataFrame(symbols, columns=header)
+        filename = '{}_symbols.csv'.format(exchange_n)
+        df.to_csv(filename) #creates binace_symbols.csv
+
+#postponed for now
+#def analyse_symbol(f_path,v_thresh,p_thresh,win_size=24,c_size='1h',plot=False):  
 
 def find_vol_spikes(df,v_thresh,win_size):
     # -- add rolling average column to df --
@@ -68,10 +96,20 @@ def add_RA(df,win_size,col,name):
 
 def load_csv(f_path,interval,suppress=True,):
     '''suppress : suppress output of the exchange and symbol name'''
-    df = pd.read_csv(f_path, index_col=1,parse_dates=["open_time"])  #change index col to 1!!! makes the difference
-    df.drop(columns = ['coin','quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
+    
+    # df = pd.read_csv(f_path,index_col=0,parse_dates=["open_time"])
+    # filename = os.path.basename(f_path)
+    # exchange_name = filename.split("_")[0]
+    # symbol_name = filename.split("_")[1].replace("-","/")
+
+    df = pd.read_csv(f_path, index_col=0,parse_dates=["open_time"]) 
+    # df = pd.read_csv(f_path)
+    df.drop(columns = ['quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
+
     symbol_name=get_symbol(f_path)
+    print("symbol at load_csv is:", symbol_name)
     exchange_name = 'Binance'
+
     ohlc_dict = {                                                                                                             
     'open':'first',                                                                                                    
     'high':'max',                                                                                                       
@@ -79,10 +117,18 @@ def load_csv(f_path,interval,suppress=True,):
     'close': 'last',                                                                                                    
     'volume': 'sum'
     }
+    
+    print("interval is:", interval)
+
     df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
+    print("df head:", df.head())
     df.reset_index(inplace=True)
+
+    print('df in load csv:', df)
+
     if not suppress:
         print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
+        
     return (exchange_name,symbol_name,df)
 
 def get_num_rows(df):
@@ -121,6 +167,109 @@ def rm_same_day_pumps(df):
     return df
 
 
+def plot_markers(plot, df, xcol_name, ycol_name, color="red", marker="x",legend_name=None):
+    markers = plot.scatter(df[xcol_name], df[ycol_name], color=color, marker=marker, legend=legend_name, 
+                           muted_alpha = 0.5, muted_color=color)
+    markers.glyph.size = 10
+    markers.glyph.line_width = 2
+    markers.level = 'overlay'
+    return markers
+
+
+
+# Main plotting method 
+def plot_pumps(symbol_name,exchange_name,win_size,df,p_spike_df,v_spike_df,vp_combined_df,price_dump_df,final_df,final_df_rm,
+                   plot_pRA=True,plot_ppeaks=True,plot_vRA=True,plot_vpeaks=True):
+    '''
+    Still needs support for different candle times (change w, not hard)
+    '''
+    TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
+
+    # ---CANDLE PLOT---
+    inc = df.close > df.open
+    dec = df.open > df.close
+
+    msec = 1000
+    minute = 60 * msec
+    hour = 60 * minute
+
+    w = hour/2 # half an hour (should be half the candle size)
+
+    p_candle = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, plot_height=450, 
+                      title = symbol_name+" Candlestick"+" | Exchange: "+exchange_name, y_axis_label='Price')
+    p_candle.xaxis.major_label_orientation = pi/4
+    p_candle.grid.grid_line_alpha=0.3
+
+    # turn off scientific notation for y axis
+    yaxis = p_candle.select(dict(type=Axis, layout="left"))[0]
+    yaxis.formatter.use_scientific = False
+
+    # plot candles
+    p_candle.segment(df.open_time, df.high, df.open_time, df.low, color="black")
+    p_candle.vbar(df.open_time[inc], w, df.open[inc], df.close[inc], fill_color="#40a075", line_color="black") # green
+    p_candle.vbar(df.open_time[dec], w, df.open[dec], df.close[dec], fill_color="#F2583E", line_color="black") # red
+
+    # marking peaks
+    if plot_ppeaks:
+        price_peaks = plot_markers(p_candle,p_spike_df,'open_time','high',legend_name='Price Increase',color="orange")
+        combined_peaks = plot_markers(p_candle,vp_combined_df,'open_time','high',legend_name='Price + Volume Increase',color="brown")
+        price_dumps = plot_markers(p_candle,final_df,'open_time','high',legend_name='Price + Volume Increase + Volume Decrease',color="red")
+        final = plot_markers(p_candle,final_df_rm,'open_time','high',legend_name='Pump and Dump',color="blue",marker="diamond")
+
+    # price rolling avg
+    if plot_pRA:
+        pRA = str(win_size)+"m Close Price RA"
+        p_ra_leg = str(win_size)+"h Rolling Avg."
+        p_candle.line(df.open_time, df[pRA], line_width=2, color="green",legend=p_ra_leg)
+
+
+    # add mutable legend
+    p_candle.legend.location = "top_right"
+    p_candle.legend.click_policy= "mute"
+
+
+    # ---VOLUME PLOT---
+    # create a new plot with a title and axis labels
+    p_vol = figure(tools=TOOLS, x_axis_label='Date', y_axis_label='Volume',
+                   x_axis_type="datetime",x_range=p_candle.x_range, plot_width=1000, plot_height=200)
+
+    vol_yaxis = p_vol.select(dict(type=Axis, layout="left"))[0]
+    vol_yaxis.formatter.use_scientific = False
+
+    # plot volume
+    p_vol.line(df.open_time, df.volume, line_width=2)
+
+    # marking peaks
+    if plot_vpeaks:
+        vol_peaks = plot_markers(p_vol,v_spike_df,'open_time','volume',legend_name='Volume Increase',color="purple")
+        combined_vol_peaks = plot_markers(p_vol,vp_combined_df,'open_time','volume',legend_name='Price + Volume Increase',color="magenta")
+        combined_dump_vol = plot_markers(p_vol,final_df,'open_time','volume',legend_name='Price + Volume Increase + Volume Decrease',color="red")
+
+    # rolling avg
+    if plot_vRA:
+        vRA = str(win_size)+"m Volume RA"
+        v_ra_leg = str(win_size)+"m Rolling Avg."
+        p_vol.line(df.open_time, df[vRA], line_width=2, color="green",legend=v_ra_leg)
+
+    # add mutable legend
+    p_vol.legend.location = "top_right"
+    p_vol.legend.click_policy= "mute"
+    
+    # change num ticks
+    p_candle.xaxis[0].ticker.desired_num_ticks = 20
+    p_vol.xaxis[0].ticker.desired_num_ticks = 20
+
+
+    # ---COMBINED PLOT---
+    p = gridplot([[p_candle],[p_vol]])
+
+    # output_notebook()
+    p_candle.output_backend = "svg"
+    p_vol.output_backend = "svg"
+    show(p)
+
+
+
 
 def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plot=False):  
     '''
@@ -135,26 +284,8 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
     exchange_name,symbol_name,df = load_csv(f_path, interval)
 
 
-    # load_csv method
-    # df = pd.read_csv(f_path, index_col=1,parse_dates=["open_time"])  #change index col to 1!!! makes the difference
-    # df.drop(columns = ['coin','quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
-    # symbol_name=get_symbol(f_path)
-    # exchange_name = 'Binance'
-    # ohlc_dict = {                                                                                                             
-    # 'open':'first',                                                                                                    
-    # 'high':'max',                                                                                                       
-    # 'low':'min',                                                                                                        
-    # 'close': 'last',                                                                                                    
-    # 'volume': 'sum'
-    # }
-    # df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
-    # df.reset_index(inplace=True)
-    # if not suppress:
-    #     print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
-    # return (exchange_name,symbol_name,df)
-
-
-
+    print("df returnd from laod_csv: ", df)
+    print("########")
 
 
     
@@ -188,6 +319,13 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
                 #  'Alleged Pump and Dumps':num_alleged,
                  'Pump and Dumps':num_final_combined}
     
+    print("row_entry: ", row_entry)
+
+
+    print("df being returned from analyse symbol:", df)
+    print("########")
+
+
     return (df,final_combined,row_entry)
 
 
@@ -218,8 +356,26 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
 
     print("index list=", index_list)
 
+    # Obtain data from the data frame
+    i = 0 #ith element in index list (THIS IS WHY ONLY ONE PUMP VISUALISED FOR NOW!!!!!!!!)
+    increment = 100
+
     if index_list:
-        
+        ####### working section for printing purposes only #######
+        # end = index_list[i]+increment
+        # start = index_list[i]-increment
+        # if int(index_list[i])-increment < 0:
+        #     start = 0
+        # if int(index_list[i])+increment > int(original_df.index[-1]):
+        #     end = original_df.index[-1]
+
+        # temp_df =  original_df.iloc[start:end]  #intraday data
+        # fig = px.line(temp_df, x='open_time', y='high')
+        # fig.show()
+
+        # to_json_data = temp_df[['open_time','open','high','low','close','volume']]
+        ##########
+
         to_json_data = original_df[['open_time','open','high','low','close','volume']]
         to_json_data['open_time'] = to_json_data['open_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
         to_db = json.dumps(to_json_data.to_numpy().tolist())
@@ -238,26 +394,13 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
 def get_anomalies():
 
     # change this endpoint and everything obtained from database .. ?
-    # get data in a range from data base
-
-    conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
-    
 
     coin = request.args.get('coin')
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
     interval = request.args.get('interval')
-
-    sql_query = f"SELECT * FROM pumpdump WHERE COIN={coin} LIMIT 10 "
-    df = pd.read_sql(sql_query, conn)
-
     x = my_func(coin, v_thresh, p_thresh,interval)
-    
-
-
-    conn.close()
-    print("x1 is: ", x[1])
-
+  
     return ({'data':x[0], 'anomalies': x[1] })
 
 ##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!!
