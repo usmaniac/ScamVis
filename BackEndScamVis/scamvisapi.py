@@ -81,6 +81,10 @@ def load_csv(f_path,interval,suppress=True,):
     }
     df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
     df.reset_index(inplace=True)
+
+    print("resampled df 15 minutes:")
+    print(df)
+
     if not suppress:
         print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
     return (exchange_name,symbol_name,df)
@@ -152,9 +156,6 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
     # if not suppress:
     #     print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
     # return (exchange_name,symbol_name,df)
-
-
-
 
 
     
@@ -239,6 +240,9 @@ def get_anomalies():
 
     # change this endpoint and everything obtained from database .. ?
     # get data in a range from data base
+    
+    # [coin, v_thresh, p_thresh, interval] all need default values
+    # these are provided on front-end it seems
 
     conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
     
@@ -248,16 +252,27 @@ def get_anomalies():
     p_thresh = request.args.get('p_thresh')
     interval = request.args.get('interval')
 
-    sql_query = f"SELECT * FROM pumpdump WHERE COIN={coin} LIMIT 10 "
+    sql_query = f"SELECT * FROM pumpdump WHERE COIN='{coin}' LIMIT 10 "
     df = pd.read_sql(sql_query, conn)
+    
+    #resample query below FINAL 900=900 seconds = 15minutes
+    '''SELECT  to_timestamp(floor((extract('epoch' from open_time) / 900 )) * 900) AT TIME ZONE 'UTC' as ts_interval_begin,                    
+    (array_agg(open ORDER BY open_time ASC))[1] as open, (array_agg(open ORDER BY open_time DESC))[1] as close,                                               
+    MAX("high") as high, MIN("low") as low,SUM("volume") as volume                                                                                        
+    FROM pumpdump                                                                                                                                             
+    WHERE coin = 'DENT-BTC'                                                                                                                                   
+    GROUP BY ts_interval_begin '''
+
+
 
     x = my_func(coin, v_thresh, p_thresh,interval)
+    #interval should also be taken care of in here
+    # x = myfunc(df, v_thresh, p_thresh)
     
 
 
     conn.close()
     print("x1 is: ", x[1])
 
-    return ({'data':x[0], 'anomalies': x[1] })
 
 ##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!!
