@@ -52,8 +52,14 @@ function Form() {
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15`)
         let x2 = await Promise.resolve(x)
 
+        // api is returning all the data at once
+        // returning all the api information at once too
+
         console.log("x2:",x2)
         console.log("x2.data:", x2.data)
+
+        // messing up here: json.parse(x2.data.data) --> but data is empty
+        // 
 
         setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
             priceParam:percentage, volumeParam: state.volumeParam, interval: state.interval  })
@@ -80,7 +86,7 @@ function Form() {
 
         console.log("x2:",x2)
         console.log("x2.data:", x2.data)
-
+    
         setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
             priceParam:percentage, volumeParam: data.Volume, interval: data.interval })  
         

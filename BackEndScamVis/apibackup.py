@@ -102,7 +102,10 @@ def load_csv(f_path,interval,suppress=True,):
     # exchange_name = filename.split("_")[0]
     # symbol_name = filename.split("_")[1].replace("-","/")
 
-    df = pd.read_csv(f_path, index_col=0,parse_dates=["open_time"]) 
+    df = pd.read_csv(f_path, index_col=1,parse_dates=["open_time"]) 
+    print("df line 106 is should have coin: ", df.head() )
+
+
     # df = pd.read_csv(f_path)
     df.drop(columns = ['quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
 
@@ -386,21 +389,23 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
 
         return to_db, index_list
     else:
-        return 'no results found'
+        return []
 
 
 # takes in 3 argumets coin, volume threshold and price threshold
 @app.route('/anomalies', methods=['GET'])
 def get_anomalies():
-
-    # change this endpoint and everything obtained from database .. ?
-
     coin = request.args.get('coin')
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
     interval = request.args.get('interval')
     x = my_func(coin, v_thresh, p_thresh,interval)
-  
-    return ({'data':x[0], 'anomalies': x[1] })
+
+    # print("no reults found: ", x)
+    if x == []:
+        return ({'data':{}, 'anomalies': {} })
+
+    else:
+        return ({'data':x[0], 'anomalies': x[1] })
 
 ##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!!

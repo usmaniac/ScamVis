@@ -66,29 +66,6 @@ def add_RA(df,win_size,col,name):
     df[name] = pd.Series.rolling(df[col],window=win_size,center=False).mean()
 
 
-def load_csv(f_path,interval,suppress=True,):
-    '''suppress : suppress output of the exchange and symbol name'''
-    df = pd.read_csv(f_path, index_col=1,parse_dates=["open_time"])  #change index col to 1!!! makes the difference
-    df.drop(columns = ['coin','quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
-    symbol_name=get_symbol(f_path)
-    exchange_name = 'Binance'
-    ohlc_dict = {                                                                                                             
-    'open':'first',                                                                                                    
-    'high':'max',                                                                                                       
-    'low':'min',                                                                                                        
-    'close': 'last',                                                                                                    
-    'volume': 'sum'
-    }
-    df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
-    df.reset_index(inplace=True)
-
-    print("resampled df 15 minutes:")
-    print(df)
-
-    if not suppress:
-        print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
-    return (exchange_name,symbol_name,df)
-
 def get_num_rows(df):
     return df.shape[0]
 
@@ -125,8 +102,7 @@ def rm_same_day_pumps(df):
     return df
 
 
-
-def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plot=False):  
+def analyse_symbol(df,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):  
     '''
     USAGE:
     f_path : path to OHLCV csv e.g.'../data/binance/binance_STORJ-BTC_[2018-04-20 00.00.00]-TO-[2018-05-09 23.00.00].csv'
@@ -135,30 +111,7 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
     c_size : candle size
     win_size : size of the window for the rolling average, in hours
     '''
-    # -- load the data --
-    exchange_name,symbol_name,df = load_csv(f_path, interval)
-
-
-    # load_csv method
-    # df = pd.read_csv(f_path, index_col=1,parse_dates=["open_time"])  #change index col to 1!!! makes the difference
-    # df.drop(columns = ['coin','quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume'],inplace=True)
-    # symbol_name=get_symbol(f_path)
-    # exchange_name = 'Binance'
-    # ohlc_dict = {                                                                                                             
-    # 'open':'first',                                                                                                    
-    # 'high':'max',                                                                                                       
-    # 'low':'min',                                                                                                        
-    # 'close': 'last',                                                                                                    
-    # 'volume': 'sum'
-    # }
-    # df = df.resample(f'{interval}T').agg(ohlc_dict).bfill()
-    # df.reset_index(inplace=True)
-    # if not suppress:
-    #     print("Exchange:",exchange_name,"\nSymbol:",symbol_name)
-    # return (exchange_name,symbol_name,df)
-
-
-    
+       
     # -- find spikes --
     vmask,vdf = find_vol_spikes(df,v_thresh,win_size)
     num_v_spikes = get_num_rows(vdf) # the number of volume spikes 
@@ -182,22 +135,18 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
     # After
     num_final_combined = get_num_rows(final_combined)
     
-    row_entry = {'Exchange':exchange_name,
-                 'Symbol':symbol_name,
-                 'Price Spikes':num_p_spikes,
-                 'Volume Spikes':num_v_spikes,
-                #  'Alleged Pump and Dumps':num_alleged,
-                 'Pump and Dumps':num_final_combined}
-    
-    return (df,final_combined,row_entry)
+    return (df,final_combined)
 
 
-def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
+
+def new_my_func(original_df, v_thresh=5, p_thresh=1.25):
     
+    #has changes as ts_interval_begin
+
     v_thresh = float(v_thresh)
     p_thresh = float(p_thresh)
 
-    original_df, pumpdf, row_entry = analyse_symbol(f'../compressedBTCpairs/{coin}.csv',v_thresh, p_thresh, interval, win_size = 240,
+    original_df, pumpdf = analyse_symbol(original_df, v_thresh, p_thresh, win_size = 240,
     c_size = '1m', plot=False)
 
     # get the indices of our pumpdf
@@ -219,60 +168,62 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
 
     print("index list=", index_list)
 
+    print("the new df with key error is:", original_df)
+
     if index_list:
         
-        to_json_data = original_df[['open_time','open','high','low','close','volume']]
-        to_json_data['open_time'] = to_json_data['open_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        to_json_data = original_df[['ts_interval_begin','open','high','low','close','volume']]
+        to_json_data['ts_interval_begin'] = to_json_data['ts_interval_begin'].dt.strftime('%Y-%m-%d %H:%M:%S')
         to_db = json.dumps(to_json_data.to_numpy().tolist())
 
-        print("attempting print: ", index_list)
-        index_list = [(original_df.iloc[x]['open_time'],int(x)) for x in index_list]
-        print("print index list is: ", index_list)
+        print("new  -------> attempting print: ", index_list)
+        index_list = [(original_df.iloc[x]['ts_interval_begin'],int(x)) for x in index_list]
+        print("new -------> print index list is: ", index_list)
 
         return to_db, index_list
     else:
-        return 'no results found'
+        return []
 
 
 # takes in 3 argumets coin, volume threshold and price threshold
 @app.route('/anomalies', methods=['GET'])
 def get_anomalies():
 
-    # change this endpoint and everything obtained from database .. ?
-    # get data in a range from data base
-    
-    # [coin, v_thresh, p_thresh, interval] all need default values
-    # these are provided on front-end it seems
-
     conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
     
-
     coin = request.args.get('coin')
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
     interval = request.args.get('interval')
-
-    sql_query = f"SELECT * FROM pumpdump WHERE COIN='{coin}' LIMIT 10 "
-    df = pd.read_sql(sql_query, conn)
     
-    #resample query below FINAL 900=900 seconds = 15minutes
-    '''SELECT  to_timestamp(floor((extract('epoch' from open_time) / 900 )) * 900) AT TIME ZONE 'UTC' as ts_interval_begin,                    
-    (array_agg(open ORDER BY open_time ASC))[1] as open, (array_agg(open ORDER BY open_time DESC))[1] as close,                                               
-    MAX("high") as high, MIN("low") as low,SUM("volume") as volume                                                                                        
-    FROM pumpdump                                                                                                                                             
-    WHERE coin = 'DENT-BTC'                                                                                                                                   
+    # resample query below FINAL 900=900 seconds = 15 minutes
+    # need to resample the minutes to second for the resample query
+    
+    interval_seconds = int(interval)*60
+    sql_query = f'''SELECT to_timestamp(floor((extract('epoch' from open_time) / {interval_seconds} )) * {interval_seconds}) AT TIME ZONE 'UTC' as ts_interval_begin,
+    (array_agg(open ORDER BY open_time ASC))[1] as open, (array_agg(open ORDER BY open_time DESC))[1] as close,
+    MAX("high") as high, MIN("low") as low,SUM("volume") as volume 
+    FROM pumpdump 
+    WHERE coin='{coin}' 
     GROUP BY ts_interval_begin '''
+    df = pd.read_sql(sql_query, conn)
 
 
+    new_data = new_my_func(df, v_thresh, p_thresh)
 
-    x = my_func(coin, v_thresh, p_thresh,interval)
-    #interval should also be taken care of in here
-    # x = myfunc(df, v_thresh, p_thresh)
-    
-
+    print("########## new is ###########")
+    if new_data:
+        print(new_data[1])
+    else:
+        print("Nothing here")
 
     conn.close()
-    print("x1 is: ", x[1])
+
+    if new_data == []:
+        return ({'data':{}, 'anomalies': {} })
+
+    else:
+        return ({'data':new_data[0], 'anomalies': new_data[1] })
 
 
 ##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!!
