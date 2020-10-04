@@ -281,7 +281,7 @@ def analyse_symbol(f_path,v_thresh,p_thresh,interval,win_size=24,c_size='1m',plo
     v_thresh : volume threshold e.g. 5 (500%)
     p_thresh : price threshold e.g. 1.05 (5%)
     c_size : candle size
-    win_size : size of the window for the rolling average, in hours
+    win_size : size of the window for the rolling average, in minute (since I change c_size from 1 hour to to 1m)
     '''
     # -- load the data --
     exchange_name,symbol_name,df = load_csv(f_path, interval)
@@ -337,7 +337,7 @@ def my_func(coin='DENT-BTC', v_thresh=5, p_thresh=1.25, interval=15):
     v_thresh = float(v_thresh)
     p_thresh = float(p_thresh)
 
-    original_df, pumpdf, row_entry = analyse_symbol(f'../compressedBTCpairs/{coin}.csv',v_thresh, p_thresh, interval, win_size = 240,
+    original_df, pumpdf, row_entry = analyse_symbol(f'../compressedBTCpairs/{coin}.csv',v_thresh, p_thresh, interval, win_size=60,
     c_size = '1m', plot=False)
 
     # get the indices of our pumpdf
