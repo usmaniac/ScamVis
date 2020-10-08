@@ -23,21 +23,19 @@ function Form() {
 
     const [state, setState] = useState({
         coin:"DENT-BTC",
-        data: [],
-        anomalies: [],
+        results: [],
         priceParam:'30',
         volumeParam: '400',
         interval: '15'  
     })
     
     const handleChange = selectedoption => {
-        console.log("change detected")
         setState({coin: selectedoption.label,
         data: []})
     }
 
     // Runs for changes in 'state'
-    useEffect(() => console.log(state), [state]);  // to print out the state
+    useEffect(() => console.log("form js state is:", state), [state]);  // to print out the state
     useEffect(() => console.log("date values is:", dateValueArray), [dateValueArray]);
 
     // Run once on startup, ie empty dependency array
@@ -52,42 +50,29 @@ function Form() {
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15`)
         let x2 = await Promise.resolve(x)
 
-        // api is returning all the data at once
-        // returning all the api information at once too
+        // console.log("data is :", x2)
 
-        console.log("x2:",x2)
-        console.log("x2.data:", x2.data)
-
-        // messing up here: json.parse(x2.data.data) --> but data is empty
-        // 
-
-        setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
+        setState({ coin:state.coin, results:x2.data.results, 
             priceParam:percentage, volumeParam: state.volumeParam, interval: state.interval  })
         }
         onStartup()
     }, [])
 
 
-
     const {register, handleSubmit, errors} = useForm();
     async function onSubmit(data) {
         // send data away to api
-        console.log("data from react-hook-form:", data)
-        console.log("coin is:",state.coin)
 
         // converting percentage ie 10% to 1.1
         let percentage = data.Price
         let newPriceThresh = percentage/100 + 1
         let newVolume = (data.Volume)/100
-        console.log("newPrice is:", newPriceThresh)
 
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}`)
         let x2 = await Promise.resolve(x)
 
-        console.log("x2:",x2)
-        console.log("x2.data:", x2.data)
     
-        setState({ coin:state.coin, data:JSON.parse(x2.data.data), anomalies:x2.data.anomalies, 
+        setState({ coin:state.coin, results:x2.data.results, 
             priceParam:percentage, volumeParam: data.Volume, interval: data.interval })  
         
     } 
@@ -141,6 +126,7 @@ function Form() {
                 <label style={{fontSize:'1.3em'}}> Time interval:  </label>
                 <div></div>
                 <select name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                    <option value="1">1 min</option>
                     <option value="5">5 min</option>
                     <option value="10">10 min</option>
                     <option value="15" selected>15 min</option>
@@ -164,13 +150,10 @@ function Form() {
 
 
             </Modal.Body>
-            {/* <Modal.Footer> */}
-            
-            {/* </Modal.Footer> */}
         </Modal>
         
     
-        <PdVisuals anomalies={state.anomalies} data={state.data} coin={state.coin} 
+        <PdVisuals results={state.results} coin={state.coin} 
         priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
     </>
     )

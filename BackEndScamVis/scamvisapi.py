@@ -268,6 +268,16 @@ def get_live_anomalies():
     FROM pumpdump 
     WHERE coin='{coin}' 
     ''' #only 1 min data anyway so need to regroup
+    #where open_time >= NOW - 2*window_size
+
+    # dont load the entire table into the df
+    # returning now: {'current_time': '2019-01-01 04:42:00', 'current_volume_ra': 2572.25, 'current_price_ra': 3.852083333333338e-06}
+    # should also return entire dataset  (sql_query will return the dataset anyway)
+    # same datasource used to visualise and calculate rolling average
+
+    # store new data points in memory as we get them 
+    
+
     df = pd.read_sql(sql_query, conn)
 
 
@@ -283,5 +293,10 @@ def get_live_anomalies():
     return json.dumps ( { 'current_time':str(ra_vol_df.iloc[-1]['open_time']),'current_volume_ra': ra_vol_df.iloc[-1]['120m Volume RA'], 'current_price_ra': ra_vol_df.iloc[-1]['120m Close Price RA']} )
 
 
-
 ##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!! why?
+
+# visualisation:
+# refresh the graph not the page
+# go to the database only once 
+# one to calculate the roling /one to get 
+# do tthat in a signle request
