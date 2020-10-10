@@ -48,9 +48,6 @@ function Form() {
         let newVolume = (state.volumeParam)/100
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15&win_size=120`)
         let x2 = await Promise.resolve(x)
-
-        // console.log("data is :", x2)
-
         setState({ coin:state.coin, results:x2.data.results, 
             priceParam:percentage, volumeParam: state.volumeParam, interval: state.interval  })
         }
@@ -85,88 +82,79 @@ function Form() {
                 <Modal.Title> Coin and anomaly parameters  </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                
                 <form onSubmit={handleSubmit(onSubmit)}>
+                    <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
+                        <label style={{fontSize:'1.3em'}} > Coin: </label>
+                        <div style={{fontSize:'1.5em'}}>
+                        <Select  ref={register} options={coins} name="Coin"/>
+                        </div>
+                    </Row>
+
+                    <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
+                        <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
+                        <DateTimeRangePicker
+                            // onChange={onChangeDate}
+                            value={dateValueArray}
+                            minDate={new Date(2019, 0, 1)}
+                            maxDate={new Date()}
+                        />
+                    </Row>
+
+                    
+                    <Row style={{display:'initial'}}>
+                    <label style={{fontSize:'1.3em'}} > Price Increase (%): </label>
+                    <br/>
+                    <input style ={{fontSize:'1.5em'}} type="text" placeholder="Price" name="Price" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Price must be a numeric value"}})}/>
+                    </Row>
                 
 
-                <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
-                    <label style={{fontSize:'1.3em'}} > Coin: </label>
-                    <div style={{fontSize:'1.5em'}}>
-                    <Select  ref={register} options={coins} onChange={handleChange} name="Coin"/>
-                    </div>
-                </Row>
+                    <Row style={{display:'initial'}}>
+                    <label style={{fontSize:'1.3em'}}> Volume Increase (%): </label>
+                    <br/>
+                    <input  style ={{fontSize:'1.5em'}} type="text" placeholder="Volume" name="Volume" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Volume must be a numeric value"}})}/>
+                    </Row>
 
-                <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
-                    <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
-                    <DateTimeRangePicker
-                        onChange={onChangeDate}
-                        value={dateValueArray}
-                        minDate={new Date(2019, 0, 1)}
-                        maxDate={new Date()}
-                    />
-                </Row>
+                    <Row style={{display:'initial'}} >
+                    <label style={{fontSize:'1.3em'}}> Time Interval:  </label>
+                    <div></div>
+                    <select name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                        <option value="1">1 min</option>
+                        <option value="5">5 min</option>
+                        <option value="10">10 min</option>
+                        <option value="15" selected>15 min</option>
+                        <option value="30">30 min</option>
+                        <option value="60">1 hr</option>
+                    </select>
+                    </Row>
 
-                
-                <Row style={{display:'initial'}}>
-                <label style={{fontSize:'1.3em'}} > Price Increase (%): </label>
-                <br/>
-                <input style ={{fontSize:'1.5em'}} type="text" placeholder="Price" name="Price" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Price must be a numeric value"}})}/>
-                </Row>
-            
-
-                <Row style={{display:'initial'}}>
-                <label style={{fontSize:'1.3em'}}> Volume Increase (%): </label>
-                <br/>
-                <input  style ={{fontSize:'1.5em'}} type="text" placeholder="Volume" name="Volume" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Volume must be a numeric value"}})}/>
-                </Row>
-
-                <Row style={{display:'initial'}} >
-                <label style={{fontSize:'1.3em'}}> Time Interval:  </label>
-                <div></div>
-                <select name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
-                    <option value="1">1 min</option>
-                    <option value="5">5 min</option>
-                    <option value="10">10 min</option>
-                    <option value="15" selected>15 min</option>
-                    <option value="30">30 min</option>
-                    <option value="60">1 hr</option>
-                </select>
-                </Row>
-
-                <Row style={{display:'initial'}} >
-                <label style={{fontSize:'1.3em'}}> Window Size:  </label>
-                <div></div>
-                <select name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
-                    <option value="15">15 min</option>
-                    <option value="30">30 min</option>
-                    <option value="60">1 hour</option>
-                    <option value="120" selected>2 hours</option>
-                    <option value="240">4 hours</option>
-                    <option value="480">8 hours</option>
-                    <option value="1440">1 day</option>
-                </select>
-                </Row>
-
-
-                
+                    <Row style={{display:'initial'}} >
+                    <label style={{fontSize:'1.3em'}}> Window Size:  </label>
+                    <div></div>
+                    <select name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                        <option value="15">15 min</option>
+                        <option value="30">30 min</option>
+                        <option value="60">1 hour</option>
+                        <option value="120" selected>2 hours</option>
+                        <option value="240">4 hours</option>
+                        <option value="480">8 hours</option>
+                        <option value="1440">1 day</option>
+                    </select>
+                    </Row>
                             
-                {errors.Price && <p>{errors.Price.message}</p>}
-                {errors.Volume && <p>{errors.Volume.message}</p>}
+                    {errors.Price && <p>{errors.Price.message}</p>}
+                    {errors.Volume && <p>{errors.Volume.message}</p>}
 
-
-
-                <input style={{marginTop:'2em', fontSize:'1.5em'}} type="submit" onClick={handleClose} value="Analyse"/>
-                <Button variant="secondary" onClick={handleClose} style={{marginLeft:'1em', padding:'1px 6px', marginBottom:'0.3em', height:'2em', fontSize:'1.35em'}}>
-                    Close
-                </Button>
-            </form>
-
-
-
+                    <input style={{marginTop:'2em', fontSize:'1.5em'}} type="submit" onClick={handleClose} value="Analyse"/>
+                    <Button variant="secondary" onClick={handleClose} style={{marginLeft:'1em', padding:'1px 6px', marginBottom:'0.3em', height:'2em', fontSize:'1.35em'}}>
+                        Close
+                    </Button>
+                </form>
             </Modal.Body>
         </Modal>
         
-    
-        <PdVisuals results={state.results} coin={state.coin}
+        {/* re-render below on click */}
+        <PdVisuals key={state.results} results={state.results} coin={state.coin}
         priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
     </>
     )

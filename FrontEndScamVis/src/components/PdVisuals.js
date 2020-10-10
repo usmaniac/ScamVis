@@ -144,14 +144,13 @@ function PdVisuals(props) {
           }
           console.log("newdata is: ", items[i].value)
         }
-        else if(props.anomalies && props.anomalies.length > 0){ //default values
+        else if(props.results && props.results.length > 0){ //default values
           fusionTable = new FusionCharts.DataStore().createDataTable(props.results[0]['ohlc_data'],schemaTop);
         }
         else { //if backend completely down use the backup dataset
           fusionTable = new FusionCharts.DataStore().createDataTable(usmanTempData,schemaTop);
           // whatever is rendered here for interval, will persist to all other visualisation intervals
           // console.log("our data is:", usmanTempData)
-          
         }
 
         let timeseriesDs = Object.assign({}, vizProperties);
@@ -185,10 +184,6 @@ function PdVisuals(props) {
       onFetchData();
     }, [props.results, selected, style, props.interval]); //added props.all_data.results to dependency array
     
-    useEffect(() => {
-      console.log('time series list change: ', state.timeSeriesList)
-    }, [state.timeSeriesList])
-  
     let fincomponent 
     if(state.timeSeriesList.length > 0){
       fincomponent = state.timeSeriesList.map(elem => 
@@ -198,7 +193,7 @@ function PdVisuals(props) {
       );
     }
 
-    else{
+    else {
       console.log("i am not sending data")
       fincomponent = (
           <div> 
@@ -238,8 +233,6 @@ function PdVisuals(props) {
           </select>
         </div>
         
-
-
         <div style={{float:'left', width:'40%'}}> Anomaly List: </div>
 
         <select className="browser-default custom-select" onChange={  e => setSelected(e.currentTarget.value) } style={{float:'left', width:'60%', fontSize:'0.95em', marginBottom:'1px'}}>
