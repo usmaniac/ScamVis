@@ -4,8 +4,9 @@ import TimeSeries from "fusioncharts/fusioncharts.timeseries";
 import ReactFC from "react-fusioncharts";
 
 // Data tests
-import jsondata from '../usmanTempData.json'
+import usmanTempData from '../usmanTempData.json'
 import one_mindata from '../1mindata.json'
+import thirty_min_data from '../30mindata.json'
 import { Accordion, Card, Button } from 'react-bootstrap';
 
 
@@ -86,8 +87,6 @@ let dataSource = {
 
 function PdVisuals(props) {
 
-    //Date Range: From {props.dates[0].toString()} to {props.dates[1].toString()}
-
     useEffect(() => {
       console.log("data returned to us is:", props.results)
     }, [props.results])
@@ -123,8 +122,6 @@ function PdVisuals(props) {
         if(props.results && props.results.length > 0){
           setItems(
             props.results.map((response ) => ({ label: response['anomaly_date'], value: response['ohlc_data'] })),
-            // props.results.map((response ) => console.log("type response['ohlc'] ", typeof response['ohlc_data'])),
-
           );
 
         } else {
@@ -132,30 +129,31 @@ function PdVisuals(props) {
         }
       }
 
-      function onFetchData() {
-        let newdata
+      async function onFetchData() {
+        let fusionTable
         if (selected) {
           console.log("selected is:", selected)
           console.log("type of selected is:",typeof selected ) // A string not 2d array
-          for(let i=0; i<items.length; i++){
+          let i
+          for(i=0; i<items.length; i++){
             if(items[i].label == selected){
-              newdata = items[i].value
+              console.log("rendering data: ", items[i].value)
+              fusionTable = new FusionCharts.DataStore().createDataTable(items[i].value, schemaTop);
+              break;
             }
           }
+          console.log("newdata is: ", items[i].value)
         }
         else if(props.anomalies && props.anomalies.length > 0){ //default values
-          newdata = props.results[0]['ohlc_data']
-          console.log("newdata: ", newdata)
+          fusionTable = new FusionCharts.DataStore().createDataTable(props.results[0]['ohlc_data'],schemaTop);
         }
         else { //if backend completely down use the backup dataset
-          newdata = jsondata 
+          fusionTable = new FusionCharts.DataStore().createDataTable(usmanTempData,schemaTop);
+          // whatever is rendered here for interval, will persist to all other visualisation intervals
+          // console.log("our data is:", usmanTempData)
+          
         }
 
-        const schema = schemaTop;
-        let fusionTable = new FusionCharts.DataStore().createDataTable(
-          newdata,
-          schema
-        );
         let timeseriesDs = Object.assign({}, vizProperties);
         timeseriesDs.dataSource = dataSource
         
@@ -177,9 +175,7 @@ function PdVisuals(props) {
               type: "candlestick"
             }
           ]
-        }
-
-            
+        }      
         setState({
           timeSeriesList: [timeseriesDs]
         });   
@@ -187,17 +183,12 @@ function PdVisuals(props) {
 
       fillAnomalyList();
       onFetchData();
-    }, [props.results, selected, style]); //added props.all_data.results to dependency array
-
-    useEffect(() => {
-      console.log("item selected:", selected)      
-    }, [selected])
+    }, [props.results, selected, style, props.interval]); //added props.all_data.results to dependency array
     
-
-
+    useEffect(() => {
+      console.log('time series list change: ', state.timeSeriesList)
+    }, [state.timeSeriesList])
   
-    // refactor the below have variable do all the mapping
-    // the final statements only for rendering
     let fincomponent 
     if(state.timeSeriesList.length > 0){
       fincomponent = state.timeSeriesList.map(elem => 
@@ -265,8 +256,6 @@ function PdVisuals(props) {
     </div>
     
     )
-
-    
 }
 
 export default PdVisuals

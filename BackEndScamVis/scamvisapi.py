@@ -113,7 +113,7 @@ def rm_same_day_pumps(df):
     return df
 
 
-def analyse_symbol(df,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):  
+def analyse_symbol(df,v_thresh,p_thresh,win_size=120,c_size='1m',plot=False):  
     '''
     USAGE:
     f_path : path to OHLCV csv e.g.'../data/binance/binance_STORJ-BTC_[2018-04-20 00.00.00]-TO-[2018-05-09 23.00.00].csv'
@@ -122,6 +122,8 @@ def analyse_symbol(df,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):
     c_size : candle size
     win_size : size of the window for the rolling average in minutes, (since I change c_size from 1 hour to to 1m)
     '''
+
+    print("win_size in analyse symbol is:", win_size)
        
     # -- find spikes --
     vmask,vdf = find_vol_spikes(df,v_thresh,win_size)
@@ -158,14 +160,16 @@ def analyse_symbol(df,v_thresh,p_thresh,win_size=24,c_size='1m',plot=False):
 
 
 
-def historical_anomalies(original_df, v_thresh=5, p_thresh=1.25):
+def historical_anomalies(original_df, v_thresh=5, p_thresh=1.25, win_size=120):
     
-    #has changes as ts_interval_begin
+    # has changes as ts_interval_begin
+    print("win_size historical anomalies is:", win_size)
 
     v_thresh = float(v_thresh)
     p_thresh = float(p_thresh)
+    win_size = int(win_size)
 
-    original_df, pumpdf = analyse_symbol(original_df, v_thresh, p_thresh, win_size = 120,
+    original_df, pumpdf = analyse_symbol(original_df, v_thresh, p_thresh, win_size,
     c_size = '1m', plot=False)
 
     # get the indices of our pumpdf
@@ -227,6 +231,9 @@ def get_anomalies():
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
     interval = request.args.get('interval')
+    win_size = request.args.get('win_size')
+
+    # print("win_size is: ", win_size) 
     
     # resample query below FINAL 900=900 seconds = 15 minutes
     # need to resample the minutes to second for the resample query
@@ -243,7 +250,7 @@ def get_anomalies():
     df = pd.read_sql(sql_query, conn)
 
 
-    new_data = historical_anomalies(df, v_thresh, p_thresh)
+    new_data = historical_anomalies(df, v_thresh, p_thresh, win_size)
     results = [obj.__dict__ for obj in new_data]
     print("rests is:", results)
     return json.dumps({"results": results})
@@ -274,7 +281,6 @@ def get_live_anomalies():
     # returning now: {'current_time': '2019-01-01 04:42:00', 'current_volume_ra': 2572.25, 'current_price_ra': 3.852083333333338e-06}
     # should also return entire dataset  (sql_query will return the dataset anyway)
     # same datasource used to visualise and calculate rolling average
-
     # store new data points in memory as we get them 
     
 
@@ -291,9 +297,6 @@ def get_live_anomalies():
     print("last row is: ", ra_vol_df.iloc[-1])
 
     return json.dumps ( { 'current_time':str(ra_vol_df.iloc[-1]['open_time']),'current_volume_ra': ra_vol_df.iloc[-1]['120m Volume RA'], 'current_price_ra': ra_vol_df.iloc[-1]['120m Close Price RA']} )
-
-
-##FRONT END WILL FUCK UP WITH INTERVAL need to fix!!! why?
 
 # visualisation:
 # refresh the graph not the page

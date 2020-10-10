@@ -38,7 +38,7 @@ function Form() {
     useEffect(() => console.log("form js state is:", state), [state]);  // to print out the state
     useEffect(() => console.log("date values is:", dateValueArray), [dateValueArray]);
 
-    // Run once on startup, ie empty dependency array
+    // Run once on startup, ie empty dependency array, this is the default view when API is running
     useEffect(() => {
         // 30% -> 1.3
         async function onStartup(){
@@ -46,8 +46,7 @@ function Form() {
         let newPriceThresh = percentage/100 + 1
 
         let newVolume = (state.volumeParam)/100
-
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15`)
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15&win_size=120`)
         let x2 = await Promise.resolve(x)
 
         // console.log("data is :", x2)
@@ -58,17 +57,15 @@ function Form() {
         onStartup()
     }, [])
 
-
+    // This is the view that occurs after you press the submit button on the form 
     const {register, handleSubmit, errors} = useForm();
     async function onSubmit(data) {
-        // send data away to api
-
-        // converting percentage ie 10% to 1.1
+        console.log("data object returned from the form is: ", data)
         let percentage = data.Price
         let newPriceThresh = percentage/100 + 1
         let newVolume = (data.Volume)/100
 
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}`)
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}&win_size=${data.win_size}`)
         let x2 = await Promise.resolve(x)
 
     
@@ -123,7 +120,7 @@ function Form() {
                 </Row>
 
                 <Row style={{display:'initial'}} >
-                <label style={{fontSize:'1.3em'}}> Time interval:  </label>
+                <label style={{fontSize:'1.3em'}}> Time Interval:  </label>
                 <div></div>
                 <select name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
                     <option value="1">1 min</option>
@@ -134,6 +131,22 @@ function Form() {
                     <option value="60">1 hr</option>
                 </select>
                 </Row>
+
+                <Row style={{display:'initial'}} >
+                <label style={{fontSize:'1.3em'}}> Window Size:  </label>
+                <div></div>
+                <select name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                    <option value="15">15 min</option>
+                    <option value="30">30 min</option>
+                    <option value="60">1 hour</option>
+                    <option value="120" selected>2 hours</option>
+                    <option value="240">4 hours</option>
+                    <option value="480">8 hours</option>
+                    <option value="1440">1 day</option>
+                </select>
+                </Row>
+
+
                 
                             
                 {errors.Price && <p>{errors.Price.message}</p>}
@@ -153,7 +166,7 @@ function Form() {
         </Modal>
         
     
-        <PdVisuals results={state.results} coin={state.coin} 
+        <PdVisuals results={state.results} coin={state.coin}
         priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
     </>
     )
