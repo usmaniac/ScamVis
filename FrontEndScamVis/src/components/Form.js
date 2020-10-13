@@ -20,7 +20,7 @@ function Form() {
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
     const [dateValueArray, onChangeDate] = useState([new Date(2019, 0, 1), new Date()]);
-
+    const [formCoin, setFormCoin] = useState('DENT-BTC')
 
     const [state, setState] = useState({
         coin:"DENT-BTC",
@@ -65,20 +65,25 @@ function Form() {
 
         if(data.live_or_historical == "live"){
             // different api called continually/ need to replace this one
-            let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}&win_size=${data.win_size}`)
+            let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
             let x2 = await Promise.resolve(x)
-            setState({ coin:state.coin, results:x2.data.results, 
+            setState({ coin:formCoin, results:x2.data.results, 
                 priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
         }
-        
+        // historical case
         else {
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}&win_size=${data.win_size}`)
+        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
         let x2 = await Promise.resolve(x)
-        setState({ coin:state.coin, results:x2.data.results, 
+        setState({ coin:formCoin, results:x2.data.results, 
             priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
         }
         
     } 
+
+    async function handleCoinChange(newvalue){
+        setFormCoin(newvalue['label'])
+    }
+
     
     return (
         <>
@@ -92,11 +97,11 @@ function Form() {
                 </Modal.Header>
                 <Modal.Body>
                 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)} id="paramaterForm">
                     <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
                         <label style={{fontSize:'1.3em'}} > Coin: </label>
                         <div style={{fontSize:'1.5em'}}>
-                        <Select  ref={register} options={coins} name="Coin"/>
+                        <Select ref={register} options={coins} name="Coin" onChange={handleCoinChange}/> 
                         </div>
                     </Row>
 
@@ -173,11 +178,11 @@ function Form() {
         </Modal>
         
         {/* render only on live mode*/}
-        { state.live_or_historical == "historical" ? (
+        { state.live_or_historical === "historical" ? (
             <PdVisuals key={state.results} results={state.results} coin={state.coin}
             priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
         ) : (
-            <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></LiveFeed> //new component without the anomaly list
+            <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam} interval={state.interval}></LiveFeed> //new component without the anomaly list
         )
         }
         

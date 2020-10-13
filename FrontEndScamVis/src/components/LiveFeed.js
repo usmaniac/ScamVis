@@ -113,7 +113,12 @@ function LiveFeed(props) {
     data: [],
     p_thresh_ra: 0,
     v_thresh_ra: 0,
-    pump_or_not: false
+    pump_or_not: String(false)
+  })
+
+  const[price_and_vol, set_price_and_vol] = useState({
+    c_price:0,
+    c_volume:0
   })
 
 
@@ -121,12 +126,10 @@ function LiveFeed(props) {
     console.log("data returned to us is:", props.results)
   }, [props.results])
 
-  
 
   const [state_timeseries, setState_timeseries] = useState({
       timeSeriesList: [], 
   })
-  const [monitoringInfo, setMonitoringInfo] = useState() // this is for the dashboard
   useInterval(() => {
     // Do some API call here ie in setTimeout
     console.log("interval time is(if null we are on pause):", intervalTime)
@@ -144,7 +147,11 @@ function LiveFeed(props) {
         data: x2.data.visualisation_data,
         p_thresh_ra: x2.data.current_price_ra,
         v_thresh_ra: x2.data.current_volume_ra,
-        pump_or_not: x2.data.pump_or_not
+        pump_or_not: String(x2.data.pump_or_not)
+      })
+      set_price_and_vol({
+        c_price: x2.data.visualisation_data[29][2],
+        c_volume: x2.data.visualisation_data[29][5]
       })
     }
     doRequests()
@@ -210,13 +217,13 @@ function LiveFeed(props) {
             <Card.Header>
             </Card.Header>
               <Card.Body >
-                <div>Coin:{props.coin} </div>
-                <div>Current price: </div>
-                <div>Current Volume: </div>
-                <div>Price Increase compared to RA:</div>
-                <div>Volume Increase compared to RA: </div>
-                <div> Interval: __ minutes </div>
-                <div> Pump Status: </div>
+                <div> Coin:{props.coin} </div>
+                <div> Price Threshold: {props.priceParam}  Volume Threshold: {props.volumeParam}</div>
+                <div> RA Price: {api_data.p_thresh_ra}  Current Price (High): {price_and_vol.c_price}</div> 
+                <div> RA Volume: {api_data.v_thresh_ra} Current Volume:{price_and_vol.c_volume} </div>   
+                {/* <div> Price Increase compared to RA:  {} </div>
+                <div>Volume Increase compared to RA: </div> */}
+                <div> Pump Status: {api_data.pump_or_not}</div>
               </Card.Body>
           </Card>
         <div>
