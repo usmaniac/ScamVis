@@ -201,7 +201,7 @@ def historical_anomalies(original_df, v_thresh=5, p_thresh=1.25, win_size=120):
             elif (val+30 > len(original_df.index)):
                 data = original_df[val-30:val]
             else:
-                data = original_df[val-30:val+30][['ts_interval_begin', 'open', 'close', 'high', 'low', 'volume']]
+                data = original_df[val-30:val+30][['ts_interval_begin', 'open', 'high', 'low', 'close', 'volume']]
             data['ts_interval_begin'] = data['ts_interval_begin'].apply(str)
             anom_object = Anomaly(anomaly_date, data.values.tolist())
             anom_list.append(anom_object)
@@ -304,7 +304,8 @@ def get_live_anomalies():
     
     data = []
     df['open_time'] = df['open_time'].apply(str)
-    data = df[-30:][['open_time', 'open', 'close', 'high', 'low', 'volume']].values.tolist()
+    # different api call (changes because of the interval)
+    data = df[-30:][['open_time', 'open', 'high', 'low', 'close', 'volume']].values.tolist()
     
     return json.dumps (
         {
