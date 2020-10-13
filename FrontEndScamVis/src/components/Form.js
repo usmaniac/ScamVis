@@ -6,6 +6,7 @@ import {  Row, Col, Container, } from 'react-bootstrap';
 import PdVisuals from './PdVisuals';
 import {Modal, Button} from 'react-bootstrap'
 import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
+import LiveFeed from './LiveFeed';
 
 
 
@@ -26,13 +27,13 @@ function Form() {
         results: [],
         priceParam:'30',
         volumeParam: '400',
+        live_or_historical: 'historical',
         interval: '15'  
     })
     
-    const handleChange = selectedoption => {
-        setState({coin: selectedoption.label,
-        data: []})
-    }
+    useEffect(() => {
+        console.log(state)
+    }, [state])
 
     // Runs for changes in 'state'
     useEffect(() => console.log("form js state is:", state), [state]);  // to print out the state
@@ -49,7 +50,7 @@ function Form() {
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15&win_size=120`)
         let x2 = await Promise.resolve(x)
         setState({ coin:state.coin, results:x2.data.results, 
-            priceParam:percentage, volumeParam: state.volumeParam, interval: state.interval  })
+            priceParam:percentage, volumeParam: state.volumeParam, live_or_historical: 'historical', interval: state.interval  })
         }
         onStartup()
     }, [])
@@ -62,12 +63,20 @@ function Form() {
         let newPriceThresh = percentage/100 + 1
         let newVolume = (data.Volume)/100
 
+        if(data.live_or_historical == "live"){
+            // different api called continually/ need to replace this one
+            let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}&win_size=${data.win_size}`)
+            let x2 = await Promise.resolve(x)
+            setState({ coin:state.coin, results:x2.data.results, 
+                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
+        }
+        
+        else {
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=${data.interval}&win_size=${data.win_size}`)
         let x2 = await Promise.resolve(x)
-
-    
         setState({ coin:state.coin, results:x2.data.results, 
-            priceParam:percentage, volumeParam: data.Volume, interval: data.interval })  
+            priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+        }
         
     } 
     
@@ -129,6 +138,16 @@ function Form() {
                     </Row>
 
                     <Row style={{display:'initial'}} >
+                    <label style={{fontSize:'1.3em'}}> Historical Mode vs Live Mode:  </label>
+                    <div></div>
+                    <select name="live_or_historical" id="live_or_historical" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                        <option value="historical" selected> historical </option>
+                        <option value="live"> live </option>
+                    </select>
+                    </Row>
+
+
+                    <Row style={{display:'initial'}} >
                     <label style={{fontSize:'1.3em'}}> Window Size:  </label>
                     <div></div>
                     <select name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
@@ -153,9 +172,15 @@ function Form() {
             </Modal.Body>
         </Modal>
         
-        {/* re-render below on click */}
-        <PdVisuals key={state.results} results={state.results} coin={state.coin}
-        priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
+        {/* render only on live mode*/}
+        { state.live_or_historical == "historical" ? (
+            <PdVisuals key={state.results} results={state.results} coin={state.coin}
+            priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
+        ) : (
+            <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></LiveFeed> //new component without the anomaly list
+        )
+        }
+        
     </>
     )
 }

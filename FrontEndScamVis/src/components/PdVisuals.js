@@ -9,9 +9,6 @@ import one_mindata from '../1mindata.json'
 import thirty_min_data from '../30mindata.json'
 import { Accordion, Card, Button } from 'react-bootstrap';
 
-
-
-
 ReactFC.fcRoot(FusionCharts, TimeSeries);
 
 const schemaTop = [{
