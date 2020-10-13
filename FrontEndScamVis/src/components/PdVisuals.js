@@ -133,7 +133,7 @@ function PdVisuals(props) {
           console.log("type of selected is:",typeof selected ) // A string not 2d array
           let i
           for(i=0; i<items.length; i++){
-            if(items[i].label == selected){
+            if(items[i].label === selected){
               console.log("rendering data: ", items[i].value)
               fusionTable = new FusionCharts.DataStore().createDataTable(items[i].value, schemaTop);
               break;
