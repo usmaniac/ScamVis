@@ -79,7 +79,7 @@ let dataSource = {
       {
         start: "2019-01-04 07:15:00",
         end: "2019-01-04 09:15:00",
-        label: "Pump and dump region",
+        label: "Pump and dump region: start",
         timeformat: "%Y-%m-%d %H:%M:%S",
         type: "full"
       }
@@ -140,6 +140,10 @@ function PdVisuals(props) {
 
       async function onFetchData() {
         let fusionTable
+        let data_visualised
+        let anomaly_point
+        let foundResults = true
+        // To switch between the anomaly list values
         if (selected) {
           console.log("selected is:", selected)
           console.log("type of selected is:",typeof selected ) // A string not 2d array
@@ -147,26 +151,46 @@ function PdVisuals(props) {
           for(i=0; i<items.length; i++){
             if(items[i].label === selected){
               console.log("rendering data: ", items[i].value)
-              fusionTable = new FusionCharts.DataStore().createDataTable(items[i].value, schemaTop);
+              data_visualised = items[i].value
+              fusionTable = new FusionCharts.DataStore().createDataTable(data_visualised, schemaTop);
+              anomaly_point = items[i].label
               break;
             }
           }
-          console.log("newdata is: ", items[i].value)
+          console.log("newdata is: ", data_visualised)
         }
-        else if(props.results && props.results.length > 0){ //default values
-          fusionTable = new FusionCharts.DataStore().createDataTable(props.results[0]['ohlc_data'],schemaTop);
+        // default values after a call from Form.js
+        else if(props.results && props.results.length > 0){ 
+          anomaly_point = props.results[0]['anomaly_date']
+          data_visualised = props.results[0]['ohlc_data']
+          fusionTable = new FusionCharts.DataStore().createDataTable(data_visualised,schemaTop);
         }
-        else { //if backend completely down use the backup dataset
-          fusionTable = new FusionCharts.DataStore().createDataTable(usmanTempData,schemaTop);
-          // whatever is rendered here for interval, will persist to all other visualisation intervals
-          // console.log("our data is:", usmanTempData)
+        // when there is no dataset at all
+        else { 
+          data_visualised = usmanTempData
+          fusionTable = new FusionCharts.DataStore().createDataTable(data_visualised,schemaTop);
+          console.log("our data is:", data_visualised)
+          anomaly_point = "2019-06-01 21:00:00"
+          foundResults = false
         }
 
         let timeseriesDs = Object.assign({}, vizProperties);
         timeseriesDs.dataSource = dataSource
-        
-        timeseriesDs.dataSource.caption.text = `${props.coin} Price`
+        if(foundResults === false){
+          timeseriesDs.dataSource.caption.text = 'NO RESULTS FOUND - SHOWING DEFAULT VIEW'
+        }
+        else {
+          timeseriesDs.dataSource.caption.text = `${props.coin} Price`
+        }
         timeseriesDs.dataSource.data = fusionTable;
+        
+        let index_of_anomaly = data_visualised.findIndex((element) => element[0] == anomaly_point)
+        console.log("anomaly point is:", anomaly_point)
+        console.log("anom_index is :", index_of_anomaly)
+        if(index_of_anomaly > 5){
+          timeseriesDs.dataSource.xaxis.timemarker[0].start = data_visualised[index_of_anomaly-5][0]
+          timeseriesDs.dataSource.xaxis.timemarker[0].end = data_visualised[index_of_anomaly+5][0]
+        }
 
         // Add in style features here 
         if(style === 'Line') {
