@@ -73,6 +73,18 @@ let dataSource = {
       max: "90000000"
     }
   ],
+  xaxis: {
+    plot: "Time",
+    timemarker: [
+      {
+        start: "2019-01-04 07:15:00",
+        end: "2019-01-04 09:15:00",
+        label: "Pump and dump region",
+        timeformat: "%Y-%m-%d %H:%M:%S",
+        type: "full"
+      }
+    ]
+  },
   navigator: {
     enabled: 1
   }
@@ -158,7 +170,7 @@ function PdVisuals(props) {
 
         // Add in style features here 
         if(style === 'Line') {
-          timeseriesDs.dataSource.yaxis[0]['plot'] = [{value:'Close', type:"smooth-line"}]
+          timeseriesDs.dataSource.yaxis[0]['plot'] = [{value:'High', type:"smooth-line"}]
         } else{
           timeseriesDs.dataSource.yaxis[0]['plot'] = [
             {
