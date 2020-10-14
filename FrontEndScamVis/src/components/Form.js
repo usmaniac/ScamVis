@@ -7,6 +7,8 @@ import PdVisuals from './PdVisuals';
 import {Modal, Button} from 'react-bootstrap'
 import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 import LiveFeed from './LiveFeed';
+import ReactTooltip from "react-tooltip";
+
 
 
 
@@ -30,6 +32,15 @@ function Form() {
         live_or_historical: 'historical',
         interval: '15'  
     })
+
+    const [disabled, set_disabled] = useState({
+        datepicker: true,
+        radioButtons: false,
+        window_size: false,
+        interval: false
+    })
+
+    const [all_or_range, set_all_or_range] = useState("selectAll")
     
     useEffect(() => {
         console.log(state)
@@ -72,10 +83,22 @@ function Form() {
         }
         // historical case
         else {
-        let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
-        let x2 = await Promise.resolve(x)
-        setState({ coin:formCoin, results:x2.data.results, 
-            priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+            // 2 cases for historical: specifyDateRange or selectAll
+            if(all_or_range==="specifyDateRange"){
+                // need to consider date value array and make the right call
+                // call is: unsure if axios will interpolate
+                let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}&from_time=${dateValueArray[0]}&to_time=${dateValueArray[1]}`) 
+                let x2 = await Promise.resolve(x)
+                setState({ coin:formCoin, results:x2.data.results, 
+                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+            }
+
+            else {
+            let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
+            let x2 = await Promise.resolve(x)
+            setState({ coin:formCoin, results:x2.data.results, 
+                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+            }
         }
         
     } 
@@ -84,11 +107,50 @@ function Form() {
         setFormCoin(newvalue['label'])
     }
 
+    async function handleRadioChangeValue(event){
+        console.log("value is: ", event.currentTarget.value)
+        // specifyDateRange and selectAll (are the two options)
+        // 
+        let value = event.currentTarget.value
+        if(value === "specifyDateRange"){
+            set_disabled({
+                datepicker: false
+            })
+            set_all_or_range("specifyDateRange")
+        }
+        else{
+            set_disabled({
+                datepicker: true
+            })
+            set_all_or_range("selectAll")
+        }
+    }
+
+    async function handleLiveOrHistoricalChange(event){
+        console.log("value:", event.currentTarget.value)
+        let value = event.currentTarget.value
+        if(value=="live"){
+            set_disabled({
+                datepicker: true,
+                radioButtons: true,
+                window_size: true,
+                interval: true
+            })
+        }
+        else{
+            set_disabled({
+                datepicker: true,
+                radioButtons: false,
+                window_size: false,
+                interval: false
+            })
+        }
+    }
     
     return (
         <>
         <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
-            Modify Coin and Anomaly Parameters
+            Set Coin and Anomaly Parameters
         </Button>
         
             <Modal style={{opacity:1}} show={show} onHide={handleClose}>
@@ -105,17 +167,15 @@ function Form() {
                         </div>
                     </Row>
 
-                    <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
-                        <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
-                        <DateTimeRangePicker
-                            // onChange={onChangeDate}
-                            value={dateValueArray}
-                            minDate={new Date(2019, 0, 1)}
-                            maxDate={new Date()}
-                        />
+                    <Row style={{display:'initial'}} >
+                    <label style={{fontSize:'1.3em'}}> Historical Mode vs Live Mode:  </label>
+                    <div></div>
+                    <select name="live_or_historical" id="live_or_historical" style={{fontSize:'1.5em'}} ref={register({required: true})} onChange={handleLiveOrHistoricalChange}>
+                        <option value="historical" selected> historical </option>
+                        <option value="live"> live </option>
+                    </select>
                     </Row>
 
-                    
                     <Row style={{display:'initial'}}>
                     <label style={{fontSize:'1.3em'}} > Price Increase (%): </label>
                     <br/>
@@ -129,10 +189,36 @@ function Form() {
                     <input  style ={{fontSize:'1.5em'}} type="text" placeholder="Volume" name="Volume" ref={register({required: true, pattern: {value:/^[0-9.]*$/ ,message: "Volume must be a numeric value"}})}/>
                     </Row>
 
+                    <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
+                         <label style={{fontSize:'1.3em'}}> All Anomalies vs Date Range:  </label>
+                         <div style= {{fontSize:'1.5rem', paddingBottom:'1.5rem'}}  >
+                            <input disabled={disabled.radioButtons} type="radio" value="selectAll" name="anomaly_select" onChange={handleRadioChangeValue} defaultChecked/> Select All Anomalies
+                            <input disabled={disabled.radioButtons} style={{marginLeft:'2rem'}} type="radio" value="specifyDateRange" onChange={handleRadioChangeValue} name="anomaly_select"/> Specify Date Range
+                        </div>
+                        <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
+                        <div style={{fontSize:'2rem'}}>
+                            <DateTimeRangePicker 
+                                onChange={onChangeDate}
+                                value={dateValueArray}
+                                minDate={new Date(2019, 0, 1)}
+                                maxDate={new Date()}
+                                disableClock={true}
+                                disableCalendar={true}
+                                disabled={disabled.datepicker}
+                            />
+                            {/* <a data-tip data-for='happyFace'> (I) </a> */}
+                            <img src='./info.png' data-tip data-for='happyFace' style={{width:'1.2em', margin:'0.5em'}}></img>
+                            <ReactTooltip id='happyFace' >
+                                <span>Time is in 24 hour format</span>
+                            </ReactTooltip>
+                        </div>
+                    </Row>
+
+
                     <Row style={{display:'initial'}} >
                     <label style={{fontSize:'1.3em'}}> Time Interval:  </label>
                     <div></div>
-                    <select name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                    <select disabled={disabled.interval} name="interval" id="intervals" style={{fontSize:'1.5em'}} ref={register({required: true})}>
                         <option value="1">1 min</option>
                         <option value="5">5 min</option>
                         <option value="10">10 min</option>
@@ -142,20 +228,12 @@ function Form() {
                     </select>
                     </Row>
 
-                    <Row style={{display:'initial'}} >
-                    <label style={{fontSize:'1.3em'}}> Historical Mode vs Live Mode:  </label>
-                    <div></div>
-                    <select name="live_or_historical" id="live_or_historical" style={{fontSize:'1.5em'}} ref={register({required: true})}>
-                        <option value="historical" selected> historical </option>
-                        <option value="live"> live </option>
-                    </select>
-                    </Row>
 
 
                     <Row style={{display:'initial'}} >
                     <label style={{fontSize:'1.3em'}}> Window Size:  </label>
                     <div></div>
-                    <select name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
+                    <select disabled={disabled.window_size} name="win_size" id="win_size" style={{fontSize:'1.5em'}} ref={register({required: true})}>
                         <option value="15">15 min</option>
                         <option value="30">30 min</option>
                         <option value="60">1 hour</option>
