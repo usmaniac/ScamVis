@@ -225,6 +225,8 @@ def live_data_feed(df, v_thresh, p_thresh):
 @app.route('/anomalies', methods=['GET'])
 def get_anomalies():
 
+    # time range begins now:
+    
     conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
     
     coin = request.args.get('coin')
@@ -233,25 +235,64 @@ def get_anomalies():
     interval = request.args.get('interval')
     win_size = request.args.get('win_size')
 
-    # print("win_size is: ", win_size) 
-    
-    # resample query below FINAL 900=900 seconds = 15 minutes
-    # need to resample the minutes to second for the resample query
-    # NEED TO CONSIDER TIME RANGE FOR THIS SELECT QUERY
-    
+    from_time = request.args.get('from_time')
+    to_time = request.args.get('to_time')
+
     interval_seconds = int(interval)*60
     print("uzzy haydos INTERVAL SECONDS IS: ", interval_seconds)
+    # resample query below FINAL 900=900 seconds = 15 minutes
+    # need to resample the minutes to second for the resample query
+
+    sql_query = ''
+
+    if from_time and to_time:
+        print("we received arugment:", from_time)
+        # date_time = Fri Feb 01 2019 00:00:00 GMT+1100
+        # temp_date_time = ' '.join(from_time.split()[1:5])
+        # print("temp date time: ", temp_date_time)
+        # datetime_object = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
+
+        # fin_from_time = datetime.strftime(datetime_object, '%Y-%m-%d %H:%M:%S')
+        # print(fin_from_time)
+
+        # temp_date_time = ' '.join(to_time.split()[1:5])
+        # datetime_object = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
+        # fin_to_time = datetime.strftime(datetime_object, '%Y-%m-%d %H:%M:%S')
+        # print(fin_to_time)
+
+    #     # correct query when to and from is provided is:
+    #     # a lot of no pumps in this range/further testing needed
+    #     sql_query = f'''SELECT to_timestamp(floor((extract('epoch' from open_time) / {interval_seconds} )) * {interval_seconds}) AT TIME ZONE 'UTC' as ts_interval_begin,
+    #     (array_agg(open ORDER BY open_time ASC))[1] as open, (array_agg(open ORDER BY open_time DESC))[1] as close,
+    #     MAX("high") as high, MIN("low") as low,SUM("volume") as volume 
+    #     FROM test_ohlcv 
+    #     WHERE coin='{coin}' 
+    #     AND open_time >= '{fin_from_time}' AND open_time <= '{fin_to_time}'
+    #     GROUP BY ts_interval_begin '''
+    else:
+        print("we did not receive both to and from")
+    
     sql_query = f'''SELECT to_timestamp(floor((extract('epoch' from open_time) / {interval_seconds} )) * {interval_seconds}) AT TIME ZONE 'UTC' as ts_interval_begin,
     (array_agg(open ORDER BY open_time ASC))[1] as open, (array_agg(open ORDER BY open_time DESC))[1] as close,
     MAX("high") as high, MIN("low") as low,SUM("volume") as volume 
     FROM test_ohlcv 
     WHERE coin='{coin}' 
     GROUP BY ts_interval_begin '''
+    
     df = pd.read_sql(sql_query, conn)
-
-
     new_data = historical_anomalies(df, v_thresh, p_thresh, win_size)
     results = [obj.__dict__ for obj in new_data]
+    if from_time and to_time:
+        print("received from and to")
+        temp_date_time = ' '.join(from_time.split()[1:5])
+        datetime_object_from = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
+
+        temp_date_time = ' '.join(to_time.split()[1:5])
+        datetime_object_to = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
+
+        results = [x for x in results if datetime_object_from <= datetime.strptime( x['anomaly_date'], '%Y-%m-%d %H:%M:%S') and datetime.strptime( x['anomaly_date'], '%Y-%m-%d %H:%M:%S') <= datetime_object_to]
+
+
     print("rests is:", results)
     return json.dumps({"results": results})
 
