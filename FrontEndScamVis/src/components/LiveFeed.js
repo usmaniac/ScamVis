@@ -139,6 +139,9 @@ function LiveFeed(props) {
     //   console.log(value)
     // }, 500); // after 500ms carry out the function
     async function doRequests() {
+      // eventual query: 
+      // http://127.0.0.1:5000/live_feed?p_thresh={props.priceParam}&v_thresh={props.volumeParam}&coin={props.coin}&interval=1
+      // Note interval should always be equal to '1' to match the API call. Need to make this adjustment in front-end. 
       let x = await axios.get('http://127.0.0.1:5000/live_feed?p_thresh=1.3&v_thresh=2&coin=QSP-BTC&interval=1')
       let x2 = await Promise.resolve(x)
       console.log(x2)
