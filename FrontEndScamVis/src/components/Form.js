@@ -76,10 +76,10 @@ function Form() {
 
         if(data.live_or_historical == "live"){
             // different api called continually/ need to replace this one
-            let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
-            let x2 = await Promise.resolve(x)
-            setState({ coin:formCoin, results:x2.data.results, 
-                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
+            // call api continuously in componenent not here
+            // let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
+            // let x2 = await Promise.resolve(x)
+            setState({ coin:formCoin, priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
         }
         // historical case
         else {
