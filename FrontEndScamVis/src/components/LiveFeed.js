@@ -211,22 +211,22 @@ function LiveFeed(props) {
 
   return (
     <React.Fragment>
-      <div className="App">
-        <button onClick={() => setIntervalTime(8000)}>Set interval to 5 seconds</button>
-        <button onClick={() => setIntervalTime(null)}>Stop interval live data feed </button>
-      </div>
+      
         {/* <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}> */}
-          <Card>
-            <Card.Header>
-            </Card.Header>
+          <Card style={{marginLeft:'100em', width:'55em', marginBottom:'0.5em', border:'solid green'}}>
               <Card.Body >
-                <div> Coin:{props.coin} </div>
-                <div> Price Threshold: {props.priceParam}  Volume Threshold: {props.volumeParam}</div>
-                <div> RA Price: {api_data.p_thresh_ra}  Current Price (High): {price_and_vol.c_price}</div> 
-                <div> RA Volume: {api_data.v_thresh_ra} Current Volume:{price_and_vol.c_volume} </div>   
-                {/* <div> Price Increase compared to RA:  {} </div>
-                <div>Volume Increase compared to RA: </div> */}
-                <div> Pump Status: {api_data.pump_or_not}</div>
+                <div className="interval_timers">
+                  <button onClick={() => setIntervalTime(8000)}>Start live data feed </button>
+                  <button onClick={() => setIntervalTime(null)}>Stop interval live data feed </button>
+                </div>
+                <div className='details' style={{fontSize:'1.5em'}}>
+                  <div> <b>Coin:</b>{props.coin} </div>
+                  <div> <b>Price Threshold:</b> {props.priceParam}  </div>
+                  <div> <b>Volume Threshold:</b> {props.volumeParam} </div>
+                  <div> <b>RA Price: {api_data.p_thresh_ra}</b>  <b>Current Price (High):</b> {price_and_vol.c_price}</div> 
+                  <div> <b>RA Volume:</b> {api_data.v_thresh_ra} <b>Current Volume:</b> {price_and_vol.c_volume} </div>   
+                  <div> <b>Pump Status: </b> {api_data.pump_or_not} </div>
+                </div>
               </Card.Body>
           </Card>
         <div>
