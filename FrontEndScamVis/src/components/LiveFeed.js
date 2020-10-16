@@ -109,6 +109,7 @@ function delay(ms) {
 function LiveFeed(props) {
   const [intervalTime, setIntervalTime] = useState(8000);  // don't forget about default i.e starting wait time
   const[value, setValue] = useState(0)
+
   const[api_data, set_api_data] = useState({
     data: [],
     p_thresh_ra: 0,
@@ -120,11 +121,21 @@ function LiveFeed(props) {
     c_price:0,
     c_volume:0
   })
-
+  const[borderColour, setBorderColour] = useState('green')
+  const [parameters, setParameters] = useState({
+    priceParam: 1.2,
+    volumeParam: 2
+  })
 
   useEffect(() => {
     console.log("data returned to us is:", props.results)
-  }, [props.results])
+    setParameters({
+      priceParam: props.priceParam/100 + 1,
+      volumeParam: props.volumeParam/100
+    })
+    dataSource.caption.text = `${props.coin} Price`
+
+  }, [props.coin, props.results, props.priceParam, props.volumeParam])
 
 
   const [state_timeseries, setState_timeseries] = useState({
@@ -140,9 +151,7 @@ function LiveFeed(props) {
     // }, 500); // after 500ms carry out the function
     async function doRequests() {
       // eventual query: 
-      // http://127.0.0.1:5000/live_feed?p_thresh={props.priceParam}&v_thresh={props.volumeParam}&coin={props.coin}&interval=1
-      // Note interval should always be equal to '1' to match the API call. Need to make this adjustment in front-end. 
-      let x = await axios.get('http://127.0.0.1:5000/live_feed?p_thresh=1.3&v_thresh=2&coin=QSP-BTC&interval=1')
+      let x = await axios.get(`http://127.0.0.1:5000/live_feed?p_thresh=${parameters.priceParam}&v_thresh=${parameters.volumeParam}&coin=${props.coin}&interval=1`)
       let x2 = await Promise.resolve(x)
       console.log(x2)
       console.log(value)
@@ -156,6 +165,11 @@ function LiveFeed(props) {
         c_price: x2.data.visualisation_data[29][2],
         c_volume: x2.data.visualisation_data[29][5]
       })
+      // if(api_data.pump_or_not == String(true)){
+      //   setBorderColour('red')
+      // } else {
+      //   setBorderColour('green')
+      // }
     }
     doRequests()
   }, intervalTime);
@@ -167,7 +181,7 @@ function LiveFeed(props) {
       timeseriesDs = Object.assign({}, vizProperties);
       timeseriesDs.dataSource = dataSource
 
-      timeseriesDs.dataSource.caption.text = `${props.coin} Price`
+      // timeseriesDs.dataSource.caption.text = `${props.coin} Price`
       timeseriesDs.dataSource.data = fusionTable;
       timeseriesDs.dataSource.yaxis[0]['plot'] = 
       [
@@ -184,7 +198,14 @@ function LiveFeed(props) {
 
       setState_timeseries({
         timeSeriesList: [timeseriesDs]
-      });   
+      });
+      
+      if(api_data.pump_or_not == String(true)){
+        setBorderColour('red')
+      } else {
+        setBorderColour('green')
+      }
+
     }
 
     onFetchData();
@@ -213,7 +234,7 @@ function LiveFeed(props) {
     <React.Fragment>
       
         {/* <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}> */}
-          <Card style={{marginLeft:'100em', width:'55em', marginBottom:'0.5em', border:'solid green'}}>
+          <Card style={{marginLeft:'100em', width:'55em', marginBottom:'0.5em', border:`solid ${borderColour}`}}>
               <Card.Body >
                 <div className="interval_timers">
                   <button onClick={() => setIntervalTime(8000)}>Start live data feed </button>
@@ -223,8 +244,8 @@ function LiveFeed(props) {
                   <div> <b>Coin:</b>{props.coin} </div>
                   <div> <b>Price Threshold:</b> {props.priceParam}  </div>
                   <div> <b>Volume Threshold:</b> {props.volumeParam} </div>
-                  <div> <b>RA Price: {api_data.p_thresh_ra}</b>  <b>Current Price (High):</b> {price_and_vol.c_price}</div> 
-                  <div> <b>RA Volume:</b> {api_data.v_thresh_ra} <b>Current Volume:</b> {price_and_vol.c_volume} </div>   
+                  <div> <b>RA Price:</b> {api_data.p_thresh_ra.toExponential(3)}  <b>Current Price (High):</b> {price_and_vol.c_price.toExponential(3)}</div> 
+                  <div> <b>RA Volume:</b> {api_data.v_thresh_ra.toExponential(3)} <b> Current Volume:</b> {price_and_vol.c_volume} </div>   
                   <div> <b>Pump Status: </b> {api_data.pump_or_not} </div>
                 </div>
               </Card.Body>
