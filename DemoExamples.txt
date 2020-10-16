@@ -1,39 +1,34 @@
 
-historical 1hour interval:
+historical:
+    navigate through dropdown of anomaly list (both line and candlestick modes)
     - coin 1: STORM-BTC
     parameters: 
         - 20% price increase
         - 120% volume increase
         (default values for everything else)
-        navigate through dropdown of anomaly list (both line and candlestick modes)
     - coin 2: ARK-BTC
         - parameters:
         - 20% price increase
         - 200% price increase
         - 10 minute interval
-        - normal window size
-        - to note: not great showing the volume
+        - 2 hour window size
+        - to note: not great showing the volume increase
     - coin 3
         - parameters: 
-        - this one has to have different window size/ and high volumes for line graph demos
-
-historical 15minute interval:
-    - coin 1: 
-        - parameters: 
-    - coin 2:
-        - parameters:
-    - coin 3
-        - parameters:  
-
-historical 1 minute interval:
-    - coin 1: 
-        - parameters: 
-    - coin 2:
-        - parameters:
-    - coin 3
-        - parameters:  
-
+        - STORJ-BTC
+        - 20% price
+        - 150% volume
+        - 5 minute interval
+        - 1 hour window
+        - specify a date range as well
 
 Live Feed:
-    - Example Case 1
+    - Example Case 1: QSP-BTC
+        -> dump_rows_in_range('QSP-BTC', '2019-03-29 05:00:00', '2019-03-29 07:45:00', conn, cur)
+        -> incremental_feed(QSP, '2019-03-29 07:45:00')
+        -> axios_front_end:
+            coin: QSP-BTC
+            price increase: 20%
+            vol increase: 200% 
+
     - Example Case 2 
