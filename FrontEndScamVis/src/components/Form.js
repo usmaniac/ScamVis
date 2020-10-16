@@ -75,10 +75,7 @@ function Form() {
         let newVolume = (data.Volume)/100
 
         if(data.live_or_historical == "live"){
-            // different api called continually/ need to replace this one
             // call api continuously in componenent not here
-            // let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
-            // let x2 = await Promise.resolve(x)
             setState({ coin:formCoin, priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
         }
         // historical case
@@ -86,7 +83,6 @@ function Form() {
             // 2 cases for historical: specifyDateRange or selectAll
             if(all_or_range==="specifyDateRange"){
                 // need to consider date value array and make the right call
-                // call is: unsure if axios will interpolate
                 let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}&from_time=${dateValueArray[0]}&to_time=${dateValueArray[1]}`) 
                 let x2 = await Promise.resolve(x)
                 setState({ coin:formCoin, results:x2.data.results, 
@@ -260,7 +256,7 @@ function Form() {
             <PdVisuals key={state.results} results={state.results} coin={state.coin}
             priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
         ) : (
-            <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam} interval={state.interval}></LiveFeed> //new component without the anomaly list
+            <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></LiveFeed> //new component without the anomaly list
         )
         }
         
