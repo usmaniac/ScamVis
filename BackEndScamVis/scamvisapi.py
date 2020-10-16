@@ -307,41 +307,31 @@ def get_live_anomalies():
     v_thresh = request.args.get('v_thresh')
     p_thresh = request.args.get('p_thresh')
     
-    # 60=60 seconds --> measuring 1 minute intervals
-
-    # get the df RA after every 5 seconds
-    # repeated calls on the front end
-    
     sql_query = f'''SELECT open_time, open, high, low, close, volume 
     FROM pumpdump 
     WHERE coin='{coin}' 
     ''' 
     
-    # only 1 min data anyway so need to regroup
-    # where open_time >= NOW - 2*window_size 
-    # dont load the entire table into the df (ON EVERY CALL)
-
-    # returning now: {'current_time': '2019-01-01 04:42:00', 'current_volume_ra': 2572.25, 'current_price_ra': 3.852083333333338e-06}
-    # should also return entire dataset  (sql_query will return the dataset anyway)
-    # same datasource used to visualise and calculate rolling average
-    # store new data points in memory as we get them 
-    
-
     df = pd.read_sql(sql_query, conn)
-
-
     ra_vol_df = live_data_feed(df, v_thresh, p_thresh)
 
     print("ra_vol_df:", ra_vol_df) 
-
     print("last volume: ", ra_vol_df.iloc[-1]['120m Volume RA'] )
     print("last price:",ra_vol_df.iloc[-1]['120m Close Price RA'] )
-
     print("last row is: ", ra_vol_df.iloc[-1])
+
+    dump_price_thresh = 1- (float(p_thresh) - 1)
+    dump_vol_thresh = 1- (float(v_thresh) - 1)
+
+    print("dump_price_thresh:", dump_price_thresh)
+    print("dump_vol_thresh:", dump_vol_thresh)
 
     pump_or_not = False
     if float(ra_vol_df.iloc[-1]['high']) >= float(p_thresh) * float(ra_vol_df.iloc[-1]['120m Close Price RA']) and float(ra_vol_df.iloc[-1]['volume']) >= float(v_thresh) * float(ra_vol_df.iloc[-1]['120m Volume RA']):
         pump_or_not = True
+    if dump_price_thresh > 0:
+        if float(ra_vol_df.iloc[-1]['high']) <= dump_price_thresh * float(ra_vol_df.iloc[-1]['120m Close Price RA']):
+            pump_or_not = True
     
     data = []
     df['open_time'] = df['open_time'].apply(str)
