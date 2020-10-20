@@ -12,9 +12,6 @@ import time
 import random
 import os
 import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.graph_objs import *
 import json
 from flask import jsonify, make_response
 
@@ -25,8 +22,26 @@ import psycopg2
 from anomaly import Anomaly
 import json
 
+# wash trading imports
+from loadandplot import BW
 
 
+
+def get_best(x):  
+    # returns the best value of each bid/ask ie first non-zero
+    # [['0.0009632', '0'], ['0.00097626', '25.66'], ['0.00097628', '61.75'], ['0.00097641', '0.59'], ['0.00097644', '25.66']]
+    # in above list 0.0009632 would be skipped as the bid is for 0 order at price 0009632
+    # x = json.loads(x) <-- dont need this with postgres method 
+    size = 0
+    i = 0
+    while size == 0:
+        if i == len(x):
+            return np.nan
+        bs = float(x[i][0])
+        size = float(x[i][1])
+        i += 1
+    # print('bs returned is:', bs)
+    return bs
 
 # gets symbol name from the csv file
 def get_symbol(f_path):
@@ -348,6 +363,90 @@ def get_live_anomalies():
         } 
     )
 
+
+@app.route('/wash_trading_graphs', methods=['GET'])
+def get_wash_trades():
+    conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
+
+    coin = request.args.get('coin')
+    exchange = request.args.get('exchange')
+    best_bid_x_values = []
+    best_bid_y_values = []
+    best_ask_x_values = []
+    best_ask_y_values = []
+    market_buy_x_values = []
+    market_buy_y_values = []
+    market_sell_x_values = []
+    market_sell_y_values = []
+    
+    # ADD date range to query
+    get_trades_query = f'''
+    SELECT * FROM wash_trading_trades WHERE coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
+    '''
+    trades_sample = pd.read_sql(get_trades_query, conn)
+    print("trades df is: ", trades_sample)
+    
+    # ADD date range to query: books sample
+    get_books_query = f'''
+    SELECT * FROM wash_trading_orders WHERE coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
+    '''
+    books_sample = pd.read_sql(get_books_query, conn)
+    print("books df is:", books_sample)
+    print("column names:", books_sample.columns)
+    books_sample = books_sample[(books_sample['local_time'] > trades_sample['local_time'].min()) & (books_sample['local_time'] < trades_sample['local_time'].max())]
+
+    print("books-sample is: ", books_sample) #this is empty for eos-btc trading pair
+
+    best_bid = books_sample['bids'].apply(get_best)  #applies get_best to each value
+    best_ask = books_sample['asks'].apply(get_best)
+    best_bid.index = books_sample['local_time']
+    best_ask.index = books_sample['local_time']
+    best_bid = best_bid.loc[best_bid.shift() != best_bid].dropna()  #wht does this mean --> the value after isnt exactly the same
+    best_ask = best_ask.loc[best_ask.shift() != best_ask].dropna()
+
+    best_bid.shape, best_ask.shape, trades_sample.shape #whats the point in this(??)
+   
+    best_bid_x_values = best_bid.iloc[::1].index.tolist()
+    best_bid_x_values = [str(x) for x in best_bid_x_values]
+    print(best_bid_x_values)
+    best_bid_y_values = best_bid.iloc[::1].to_numpy().tolist()
+    print(best_bid_y_values)
+
+
+    best_ask_x_values = best_ask.iloc[::1].index.tolist()
+    best_ask_x_values = [str(x) for x in best_ask_x_values]
+    print("best ask x:" , best_ask_x_values)
+    best_ask_y_values = best_ask.iloc[::1].to_numpy().tolist()
+    print("best ask y:", best_ask_y_values)
+
+    market_buy_x_values = trades_sample[trades_sample['side'] == 2]['local_time'].to_numpy()
+    market_buy_x_values = [str(x) for x in market_buy_x_values]
+    print("market x values is:", market_buy_x_values)
+
+    market_buy_y_values = trades_sample[trades_sample['side'] == 2]['price'].to_numpy().tolist()
+    print("market y values is: ", market_buy_y_values)
+    
+
+    market_sell_x_values = trades_sample[trades_sample['side'] == 1]['local_time'].to_numpy()
+    market_sell_x_values = [str(x) for x in market_sell_x_values]
+    market_sell_y_values = trades_sample[trades_sample['side'] == 1]['price'].to_numpy().tolist()
+
+
+    # xxx.plotly_trades(trades_sample, best_bid, best_ask, symbol)
+    # what should actually be returned:
+    # best_bid: ask/bid x values, ask/bid y values
+
+    return json.dumps({
+        'best_bid_x_values': best_bid_x_values,
+        'best_bid_y_values': best_bid_y_values,
+        'best_ask_x_values': best_ask_x_values,
+        'best_ask_y_values': best_ask_y_values,
+        'market_buy_x_values': market_buy_x_values,
+        'market_buy_y_values': market_buy_y_values,
+        'market_sell_x_values': market_sell_x_values,
+        'market_sell_y_values': market_sell_y_values,
+        'symbol': coin
+    })
 # visualisation:
 # refresh the graph not the page
 # go to the database only once 

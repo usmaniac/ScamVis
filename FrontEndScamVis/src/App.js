@@ -4,12 +4,13 @@ import './App.css';
 import Title from './components/Title'
 import PdVisuals from './components/PdVisuals';
 import Form from './components/Form'
+import WashTradingForm from './components/WashTradingForm'
 import {  Row, Col, Container, } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function App() {
-  const [currentScam, setCurrentScam] = useState("pump_and_dump")
+  const [currentScam, setCurrentScam] = useState("wash_trading")  // CHANGE THIS BACK LATER
 
   useEffect(() => {
     console.log("current scam", currentScam)
@@ -17,8 +18,13 @@ function App() {
 
   let element_to_render
   if(currentScam=='pump_and_dump'){
+    // To note: Form contains the graphs as well
     element_to_render = <Form/>
-  } else {
+  } 
+  else if (currentScam=='wash_trading'){
+    element_to_render = <WashTradingForm/>
+  }
+  else {
     element_to_render = <div> To do: {currentScam}</div>
   }
   
@@ -38,12 +44,13 @@ function App() {
 
   return (
 
+    // CHANGE default checked back to pump-dump before final submit
     <div className="App">
       <Title/>
       <div style={{position:'absolute', top:'40px', right:'40px', fontSize:'1.5rem'}}>
         <b>Scam Select:&nbsp;</b>
-        <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} defaultChecked/> Pump and Dump &nbsp;
-        <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}}/> Wash Trading &nbsp;
+        <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} /> Pump and Dump &nbsp;
+        <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}} defaultChecked/> Wash Trading &nbsp;
         <input onChange={handleRadioChangeValue} type="radio" value="spoofing" name="scam" style={{display:'inline'}} /> Spoofing
       </div>
       {element_to_render}
