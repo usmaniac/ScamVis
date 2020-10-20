@@ -7,8 +7,9 @@ import {Modal, Button} from 'react-bootstrap'
 import ReactTooltip from "react-tooltip";
 import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 import WashingVisuals from './WashingVisuals'
+import WashingPriceDistributionVisuals from './WashingPriceDistributionVisuals';
 
-const washCoins = require('./washCoins').arr;
+const BWwashCoins = require('./BWwashCoins').arr;
 
 function WashTradingForm() {
 
@@ -21,13 +22,14 @@ function WashTradingForm() {
     const [isDisabled, setDisabled] = useState(true)
     const [currentExchange, setCurrentExchange] = useState('BW')
     const[results, setResults] = useState({
-        // trades_sample: [],
-        // best_bid_table: [],
         best_bid_x_values: [],
         best_bid_y_values: [],
         best_ask_x_values: [],
-        best_ask_y_values:[],
-        // best_ask_table: [],
+        best_ask_y_values: [],
+        market_buy_x_values: [],
+        market_buy_y_values: [],
+        market_sell_x_values: [],
+        market_sell_y_values: [],
         symbol: 'BSV_BTC'
     })
     
@@ -35,7 +37,9 @@ function WashTradingForm() {
         { value: 'BW', label: 'BW' },
         { value: 'Binance', label: 'Binance' },
         { value: 'Okex', label: 'Okex' }
-      ]
+    ]
+    
+    const [currentVisuals, setCurrentVisuals] = useState('trades_graph')
 
     useEffect(() => {
         console.log(formCoin)
@@ -84,11 +88,30 @@ function WashTradingForm() {
         setCurrentExchange(newvalue['label'])
     }
 
+    async function radioVisualsChange(event){
+        let value = event.currentTarget.value
+        // console.log(value)
+        setCurrentVisuals(value)
+    }
+
+    let elementToRender
+    if(currentVisuals=='trades_graph'){
+        elementToRender= <WashingVisuals key={formCoin} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals>
+    }
+    else{
+        elementToRender = <WashingPriceDistributionVisuals></WashingPriceDistributionVisuals>
+    }
+
     return (
         <>
         <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
             Set Coin and Anomaly Parameters
         </Button>
+        <div style={{position:'absolute', right:'160px', marginBottom:'10px', fontSize:'1.5rem', bottom:'620px'}}>
+        <b>Visuals Select:&nbsp;</b>
+            <input onChange={radioVisualsChange} type="radio" name="graph_to_show" value="trades_graph" style={{display:'inline'}} defaultChecked/> Trades &nbsp;
+            <input onChange={radioVisualsChange} type="radio" name="graph_to_show" value="price_distribution" style={{display:'inline'}} /> Price Distribution &nbsp;
+        </div>
             <Modal style={{opacity:1}} show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                 <Modal.Title> Coin and Anomaly Parameters </Modal.Title>
@@ -99,7 +122,7 @@ function WashTradingForm() {
                     <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
                         <label style={{fontSize:'1.3em'}} > Coin: </label>
                         <div style={{fontSize:'1.5em'}}>
-                            <Select ref={register} options={washCoins} name="Coin" onChange={handleCoinChange}/> 
+                            <Select ref={register} options={BWwashCoins} name="Coin" onChange={handleCoinChange}/> 
                         </div>
                     </Row>
 
@@ -147,8 +170,8 @@ function WashTradingForm() {
             </Modal.Body>
         </Modal>
 
-        <WashingVisuals key={formCoin} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals>
-
+        {/* <WashingVisuals key={formCoin} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals> */}
+        {elementToRender}
         </>
     )
 }
