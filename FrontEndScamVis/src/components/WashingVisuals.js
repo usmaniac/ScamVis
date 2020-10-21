@@ -85,7 +85,31 @@ function WashingVisuals(props) {
         }
     }
 
-    let data = [trace2, trace3, trace0, trace1]
+    let binanceTradeTrace = {
+        x: props.results['binance_trades_x_values'],
+        y: props.results['binance_trades_y_values'],
+        name: 'Binance Trade (side not provided)',
+        mode: 'markers',
+        marker: {
+            size: 10,
+            color: 'rgb(299, 199, 188)',
+            symbol: 'x',
+            line: {
+                width: 0,
+                color:'#3F4B7F'
+            }
+        }
+    }
+
+    let data;
+    if(props.results['binance_trades_x_values'] == []){
+        
+        data = [trace2, trace3, trace0, trace1]
+    }
+    else{
+        console.log("non empty binance array")
+        data = [trace2, trace3, binanceTradeTrace]
+    }
     
     let layout = { 
         title: `${props.coin} wash trading analysis`,
