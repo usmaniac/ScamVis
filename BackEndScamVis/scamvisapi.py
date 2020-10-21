@@ -378,6 +378,8 @@ def get_wash_trades():
     market_buy_y_values = []
     market_sell_x_values = []
     market_sell_y_values = []
+    binance_trades_x_values=[]
+    binance_trades_y_values=[]
     
     # ADD date range to query
     get_trades_query = f'''
@@ -419,17 +421,24 @@ def get_wash_trades():
     best_ask_y_values = best_ask.iloc[::1].to_numpy().tolist()
     print("best ask y:", best_ask_y_values)
 
-    market_buy_x_values = trades_sample[trades_sample['side'] == 2]['local_time'].to_numpy()
-    market_buy_x_values = [str(x) for x in market_buy_x_values]
-    print("market x values is:", market_buy_x_values)
-
-    market_buy_y_values = trades_sample[trades_sample['side'] == 2]['price'].to_numpy().tolist()
-    print("market y values is: ", market_buy_y_values)
+    if (exchange != 'Binance'):
+        market_buy_x_values = trades_sample[trades_sample['side'] == 2]['local_time'].to_numpy()
+        market_buy_x_values = [str(x) for x in market_buy_x_values]
+        print("market x values is:", market_buy_x_values)
+        market_buy_y_values = trades_sample[trades_sample['side'] == 2]['price'].to_numpy().tolist()
+        print("market y values is: ", market_buy_y_values)
+        market_sell_x_values = trades_sample[trades_sample['side'] == 1]['local_time'].to_numpy()
+        market_sell_x_values = [str(x) for x in market_sell_x_values]
+        market_sell_y_values = trades_sample[trades_sample['side'] == 1]['price'].to_numpy().tolist()
     
+    else:
+        print("Exchange is binance")
+        binance_trades_x_values = trades_sample['local_time'].to_numpy()
+        binance_trades_x_values = [str(x) for x in binance_trades_x_values]
+        binance_trades_y_values = trades_sample['price'].to_numpy().tolist()
 
-    market_sell_x_values = trades_sample[trades_sample['side'] == 1]['local_time'].to_numpy()
-    market_sell_x_values = [str(x) for x in market_sell_x_values]
-    market_sell_y_values = trades_sample[trades_sample['side'] == 1]['price'].to_numpy().tolist()
+        print("binance trades here is: ", binance_trades_x_values)
+       
 
 
     # xxx.plotly_trades(trades_sample, best_bid, best_ask, symbol)
@@ -445,6 +454,8 @@ def get_wash_trades():
         'market_buy_y_values': market_buy_y_values,
         'market_sell_x_values': market_sell_x_values,
         'market_sell_y_values': market_sell_y_values,
+        'binance_trades_x_values': binance_trades_x_values,
+        'binance_trades_y_values': binance_trades_y_values,
         'symbol': coin
     })
 # visualisation:
