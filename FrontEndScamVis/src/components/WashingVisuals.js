@@ -102,13 +102,14 @@ function WashingVisuals(props) {
     }
 
     let data;
-    if(props.results['binance_trades_x_values'] == []){
-        
-        data = [trace2, trace3, trace0, trace1]
+    
+    if (props.results['binance_trades_x_values'].length > 0) {
+        console.log("printing binance results")
+        data = [trace2, trace3, binanceTradeTrace]
     }
     else{
-        console.log("non empty binance array")
-        data = [trace2, trace3, binanceTradeTrace]
+        console.log("printing non-binance results")
+        data = [trace2, trace3, trace0, trace1]
     }
     
     let layout = { 
