@@ -11,6 +11,7 @@ import WashingPriceDistributionVisuals from './WashingPriceDistributionVisuals';
 
 const BWwashCoins = require('./BWwashCoins').arr;
 const BinanceWashCoins = require('./binanceWashCoins').arr
+const LbankWashCoins = require('./LbankWashCoins').arr
 
 function WashTradingForm() {
 
@@ -39,13 +40,13 @@ function WashTradingForm() {
     const exchangeList = [
         { value: 'BW', label: 'BW' },
         { value: 'Binance', label: 'Binance' },
-        { value: 'Okex', label: 'Okex' }
+        { value: 'Lbank', label: 'Lbank' }
     ]
 
     const exchangeMapping ={
         "BW": BWwashCoins,
         "Binance": BinanceWashCoins,
-        "Okex": []
+        "Lbank": LbankWashCoins
     }
     
     const [currentVisuals, setCurrentVisuals] = useState('trades_graph')
@@ -58,6 +59,29 @@ function WashTradingForm() {
         console.log(currentExchange)
     }, [currentExchange])
     
+    // On start up
+    useEffect(() => {
+        async function onStartUp(){
+            let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}`)
+            let x2 = await Promise.resolve(x)
+            setResults({
+                best_bid_x_values: x2.data.best_bid_x_values,
+                best_bid_y_values: x2.data.best_bid_y_values,
+                best_ask_x_values: x2.data.best_ask_x_values,
+                best_ask_y_values: x2.data.best_ask_y_values,
+                market_buy_x_values: x2.data.market_buy_x_values,
+                market_buy_y_values: x2.data.market_buy_y_values,
+                market_sell_x_values: x2.data.market_sell_x_values,
+                market_sell_y_values: x2.data.market_sell_y_values,
+                binance_trades_x_values: x2.data.binance_trades_x_values,
+                binance_trades_y_values: x2.data.binance_trades_y_values,
+                symbol: x2.data.symbol
+            })
+        }
+        onStartUp()
+    }, []);
+
+
     async function onSubmit(data) {
         console.log("data object returned from the form is: ", data)    
         // carry out API calls here and set results state
