@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import request
+from flask import request, Response
 from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
@@ -21,11 +21,25 @@ import mplfinance as mpf
 import psycopg2
 from anomaly import Anomaly
 import json
+import base64
 
 # wash trading imports
 from loadandplot import BW
+import io
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib import pyplot as plt
+import seaborn as sns
+
+import matplotlib
+matplotlib.use('Agg')
 
 
+trades_sample=[]
+best_bid = []
+best_ask = []
+coin = ""
+exchange = ""
 
 def get_best(x):  
     # returns the best value of each bid/ask ie first non-zero
@@ -262,19 +276,6 @@ def get_anomalies():
 
     if from_time and to_time:
         print("we received arugment:", from_time)
-        # date_time = Fri Feb 01 2019 00:00:00 GMT+1100
-        # temp_date_time = ' '.join(from_time.split()[1:5])
-        # print("temp date time: ", temp_date_time)
-        # datetime_object = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
-
-        # fin_from_time = datetime.strftime(datetime_object, '%Y-%m-%d %H:%M:%S')
-        # print(fin_from_time)
-
-        # temp_date_time = ' '.join(to_time.split()[1:5])
-        # datetime_object = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
-        # fin_to_time = datetime.strftime(datetime_object, '%Y-%m-%d %H:%M:%S')
-        # print(fin_to_time)
-
     #     # correct query when to and from is provided is:
     #     # a lot of no pumps in this range/further testing needed
     #     sql_query = f'''SELECT to_timestamp(floor((extract('epoch' from open_time) / {interval_seconds} )) * {interval_seconds}) AT TIME ZONE 'UTC' as ts_interval_begin,
@@ -306,7 +307,6 @@ def get_anomalies():
         datetime_object_to = datetime.strptime(temp_date_time, '%b %d %Y %H:%M:%S')
 
         results = [x for x in results if datetime_object_from <= datetime.strptime( x['anomaly_date'], '%Y-%m-%d %H:%M:%S') and datetime.strptime( x['anomaly_date'], '%Y-%m-%d %H:%M:%S') <= datetime_object_to]
-
 
     print("rests is:", results)
     return json.dumps({"results": results})
@@ -366,10 +366,19 @@ def get_live_anomalies():
 
 @app.route('/wash_trading_graphs', methods=['GET'])
 def get_wash_trades():
-    conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
+    global best_ask
+    global best_bid
+    global trades_sample
+    global coin
+    global exchange
 
+    conn = psycopg2.connect("dbname=scamvis user=postgres password=postgres")
     coin = request.args.get('coin')
     exchange = request.args.get('exchange')
+
+    # from_time = request.args.get('from_time')
+    # to_time = request.args.get('to_time')
+
     best_bid_x_values = []
     best_bid_y_values = []
     best_ask_x_values = []
@@ -381,6 +390,9 @@ def get_wash_trades():
     binance_trades_x_values=[]
     binance_trades_y_values=[]
     
+    # sample query with date range:
+    # select * from wash_trading_orders where local_time >= '2020-10-19 07:47' and local_time<='2020-10-19 7:50' and exchange='BW';
+
     # ADD date range to query
     get_trades_query = f'''
     SELECT * FROM wash_trading_trades WHERE coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
@@ -439,12 +451,6 @@ def get_wash_trades():
 
         print("binance trades here is: ", binance_trades_x_values)
        
-
-
-    # xxx.plotly_trades(trades_sample, best_bid, best_ask, symbol)
-    # what should actually be returned:
-    # best_bid: ask/bid x values, ask/bid y values
-
     return json.dumps({
         'best_bid_x_values': best_bid_x_values,
         'best_bid_y_values': best_bid_y_values,
@@ -456,10 +462,73 @@ def get_wash_trades():
         'market_sell_y_values': market_sell_y_values,
         'binance_trades_x_values': binance_trades_x_values,
         'binance_trades_y_values': binance_trades_y_values,
-        'symbol': coin
+        'symbol': coin,
     })
-# visualisation:
-# refresh the graph not the page
-# go to the database only once 
-# one to calculate the roling /one to get 
-# do tthat in a signle request
+
+@app.route('/plot.png')
+def plot_png():
+    fig = create_figure()
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
+
+def create_figure():
+    # fig = Figure()
+    global trades_sample
+    global best_bid
+    global best_ask
+    trades_seq = trades_sample[['local_time', 'price', 'size']].set_index('local_time', drop=True)
+    # Concatenating best_bid, best_ask and trades data
+    trades_mid_diff = pd.concat([trades_seq, best_bid]).rename(columns={0: 'best_bid'}).sort_index()
+    trades_mid_diff = pd.concat([trades_mid_diff, best_ask]).rename(columns={0: 'best_ask'}).sort_index()
+    # Calculating price delta
+    trades_mid_diff.loc[:, ['best_bid', 'best_ask']] = trades_mid_diff[['best_bid', 'best_ask']].ffill()
+    trades_mid_diff.dropna(inplace=True)
+    midprice = (trades_mid_diff['best_ask'] + trades_mid_diff['best_bid']) / 2
+    spread = trades_mid_diff['best_ask'] - trades_mid_diff['best_bid']
+    trades_mid_diff['price_delt'] = (midprice - trades_mid_diff['price']) / spread
+    
+    fig, axis = plt.subplots(figsize=(12,6)) 
+    sns.distplot(trades_mid_diff['price_delt'], bins=50) #fills in the subplot here
+    plt.title(f'''Distribution of value "(Trade_price - Mid_price) / '
+    '(Spread)" for {coin} on {exchange}''')
+    
+    return fig 
+
+# Return multiple images = append to array
+@app.route('/buy_sell.png')
+def plot_buy_sell_png():
+    fig = create_buy_sell_figure()
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
+
+
+# discuss with Dilum, this endpoint doesn't always show data, relies on milliseconds between data
+def create_buy_sell_figure():
+    # Sell Figures
+    global coin
+    global exchange
+    global trades_sample
+    # trades_int = (trades_sample['local_time'][trades_sample['side'] == 1].diff().dt.seconds * 1e6 + 
+    #           trades_sample['local_time'][trades_sample['side'] == 1].diff().dt.microseconds).dropna()
+    # trades_int = trades_int[trades_int >= 0]
+    # fig, ax = plt.subplots(figsize=(12, 6))
+    # sns.distplot(trades_int[trades_int < 1e5],  
+    #             hist_kws={'range': (0, 1e5)},
+    #             kde_kws={'clip': (0, 1e5)},
+    #             bins=100)
+    # plt.title(f'SELL Trades interval distribution for {coin} on {exchange}')
+
+    # Buy side
+    trades_int = (trades_sample['local_time'][trades_sample['side'] == 2].diff().dt.seconds * 1e6 + 
+              trades_sample['local_time'][trades_sample['side'] == 2].diff().dt.microseconds).dropna()
+    trades_int = trades_int[trades_int >= 0]
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.distplot(trades_int[trades_int < 1e5],  
+                hist_kws={'range': (0, 1e5)},
+                kde_kws={'clip': (0, 1e5)},
+                bins=100)
+    plt.title(f'SELL Trades interval distribution for {coin} on {exchange}')
+
+    return fig
