@@ -46,13 +46,13 @@ function WashTradingForm() {
     const exchangeMapping ={
         "BW": BWwashCoins,
         "Binance": BinanceWashCoins,
-        "Lbank": LbankWashCoins
+        "lbank": LbankWashCoins
     }
     
     const [currentVisuals, setCurrentVisuals] = useState('trades_graph')
 
     useEffect(() => {
-        console.log(formCoin)
+        console.log("form coin is: ", formCoin)
     }, [formCoin])
     
     useEffect(() => {
@@ -120,7 +120,11 @@ function WashTradingForm() {
     }
     
     async function handleExchangeChange(newvalue){
-        setCurrentExchange(newvalue['label'])
+        if(newvalue['label'] == "Lbank"){
+            setCurrentExchange("lbank")
+        } else {
+            setCurrentExchange(newvalue['label'])
+        }
     }
 
     async function radioVisualsChange(event){
@@ -131,10 +135,10 @@ function WashTradingForm() {
 
     let elementToRender
     if(currentVisuals=='trades_graph'){
-        elementToRender= <WashingVisuals key={formCoin} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals>
+        elementToRender= <WashingVisuals key={formCoin} exchange={currentExchange} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals>
     }
     else{
-        elementToRender = <WashingPriceDistributionVisuals></WashingPriceDistributionVisuals>
+        elementToRender = <WashingPriceDistributionVisuals coin={formCoin}></WashingPriceDistributionVisuals>
     }
 
     return (

@@ -113,7 +113,7 @@ function WashingVisuals(props) {
     }
     
     let layout = { 
-        title: `${props.coin} wash trading analysis`,
+        title: `Wash Trading Analysis: ${props.coin} at ${props.exchange} `,
         yaxis: {
             zeroline:true
         },
