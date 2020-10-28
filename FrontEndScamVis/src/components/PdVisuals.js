@@ -107,7 +107,7 @@ function PdVisuals(props) {
     // list of items in the drop down list at the
     const [items, setItems] = useState(
       [{
-        label: "no results found for given parameters showing default view",
+        label: "no results found",
         value: []
       }],
     );
@@ -239,11 +239,11 @@ function PdVisuals(props) {
     <div> 
       
       <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}>
-        <Accordion defaultActiveKey="1" style={{float:'left', width:'70%'}}>
+        <Accordion defaultActiveKey="1" style={{float:'left', width:'70%', marginTop:'0.25em'}}>
         <Card>
-          <Card.Header>
+          <Card.Header style={{padding:'0'}}>
             <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
-              Click to see current paramaters
+              See Parameters
             </Accordion.Toggle>
           </Card.Header>
           <Accordion.Collapse eventKey="0">
@@ -266,9 +266,9 @@ function PdVisuals(props) {
           </select>
         </div>
         
-        <div style={{float:'left', width:'40%'}}> Anomaly List: </div>
+        <div style={{position:'absolute', left:'48em', top:'145px', fontSize:'1.1em'}}> Anomaly List: </div>
 
-        <select className="browser-default custom-select" onChange={  e => setSelected(e.currentTarget.value) } style={{float:'left', width:'60%', fontSize:'0.95em', marginBottom:'1px'}}>
+        <select className="browser-default custom-select" onChange={  e => setSelected(e.currentTarget.value) } style={{position:'absolute', left:'55em', top:'145px', fontSize:'1.1em', width:'12%'}}>
           {items && items.map(item => (
             // console.log("item value", item.value),
             <option key={item.label} value={item.label} > 

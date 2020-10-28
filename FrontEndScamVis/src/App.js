@@ -47,7 +47,7 @@ function App() {
     // CHANGE default checked back to pump-dump before final submit
     <div className="App">
       <Title/>
-      <div style={{position:'absolute', top:'40px', right:'40px', fontSize:'1.5rem'}}>
+      <div style={{position:'absolute', top:'145px', left:'40px', fontSize:'1.5rem'}}>
         <b>Scam Select:&nbsp;</b>
         <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} /> Pump and Dump &nbsp;
         <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}} defaultChecked/> Wash Trading &nbsp;

@@ -145,7 +145,7 @@ function Form() {
     
     return (
         <>
-        <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
+        <Button variant="primary" onClick={handleShow}  style={{ fontSize:'1.5em', position:'absolute', top:'143px', left:'33em'}}>
             Set Coin and Anomaly Parameters
         </Button>
         
