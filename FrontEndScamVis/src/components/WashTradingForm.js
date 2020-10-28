@@ -20,8 +20,8 @@ function WashTradingForm() {
     const handleShow = () => setShow(true);  
     const [formCoin, setFormCoin] = useState('BSV_BTC')
     const {register, handleSubmit, errors} = useForm();
-    const [dateValueArray, onChangeDate] = useState([new Date(2019, 0, 1), new Date()]);
-    const [isDisabled, setDisabled] = useState(true)
+    // default values on startup are specified here
+    const [dateValueArray, onChangeDate] = useState([new Date(2020, 9, 19, 7, 47), new Date(2020, 9, 23, 11, 4)]);
     const [currentExchange, setCurrentExchange] = useState('BW')
     const[results, setResults] = useState({
         best_bid_x_values: [],
@@ -62,7 +62,7 @@ function WashTradingForm() {
     // On start up
     useEffect(() => {
         async function onStartUp(){
-            let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}`)
+            let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}&from_time=${dateValueArray[0].toISOString()}&to_time=${dateValueArray[1].toISOString()}`)
             let x2 = await Promise.resolve(x)
             setResults({
                 best_bid_x_values: x2.data.best_bid_x_values,
@@ -86,7 +86,8 @@ function WashTradingForm() {
         console.log("data object returned from the form is: ", data)    
         // carry out API calls here and set results state
         // need this to take in the coin that we want
-        let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}`)
+        let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}
+        &from_time=2020-10-19 07:47&to_time= 2020-10-23 11:04`)
         let x2 = await Promise.resolve(x)
         setResults({
             best_bid_x_values: x2.data.best_bid_x_values,
@@ -101,18 +102,6 @@ function WashTradingForm() {
             binance_trades_y_values: x2.data.binance_trades_y_values,
             symbol: x2.data.symbol
         })
-    }
-    
-
-    async function handleRadioChangeValue(event){
-        let value = event.currentTarget.value
-        // console.log("value is: ", value)
-        if(value === "specifyDateRange"){
-            setDisabled(false)
-        }
-        else{
-            setDisabled(true)
-        }
     }
     
     async function handleCoinChange(newvalue){
@@ -143,10 +132,10 @@ function WashTradingForm() {
 
     return (
         <>
-        <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'12em', fontSize:'1.5em'}}>
+        <Button variant="primary" onClick={handleShow}  style={{float:'left',marginLeft:'45em', fontSize:'1.5em'}}>
             Set Coin and Anomaly Parameters
         </Button>
-        <div style={{position:'absolute', right:'160px', marginBottom:'10px', fontSize:'1.5rem', bottom:'620px'}}>
+        <div style={{ fontSize:'1.5em', marginTop:'0.5em'}}>
         <b>Visuals Select:&nbsp;</b>
             <input onChange={radioVisualsChange} type="radio" name="graph_to_show" value="trades_graph" style={{display:'inline'}} defaultChecked/> Trades &nbsp;
             <input onChange={radioVisualsChange} type="radio" name="graph_to_show" value="price_distribution" style={{display:'inline'}} /> Price Distribution &nbsp;
@@ -174,21 +163,16 @@ function WashTradingForm() {
                     </Row>
 
                     <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial'}}>
-                         <label style={{fontSize:'1.3em'}}> All Anomalies vs Date Range:  </label>
-                         <div style= {{fontSize:'1.5rem', paddingBottom:'1.5rem'}}  >
-                            <input type="radio" value="selectAll" name="anomaly_select" onChange={handleRadioChangeValue} defaultChecked/> Select All Anomalies
-                            <input style={{marginLeft:'2rem'}} type="radio" value="specifyDateRange" onChange={handleRadioChangeValue} name="anomaly_select"/> Specify Date Range
-                        </div>
                         <label style={{fontSize:'1.3em'}} > Date/Time Range: {' '} </label>
                         <div style={{fontSize:'2rem'}}>
                             <DateTimeRangePicker 
                                 onChange={onChangeDate}
                                 value={dateValueArray}
-                                minDate={new Date(2020, 9, 19, 19, 45)}
-                                maxDate={new Date(2020, 9, 19, 20, 45)}
+                                minDate={new Date(2020, 9, 19, 7, 47)}
+                                // maxDate={new Date(2020, 9, 19, 20, 45)}
                                 disableClock={true}
                                 disableCalendar={true}
-                                disabled={isDisabled}
+                                // disabled={isDisabled}
                             />
                             {/* <a data-tip data-for='happyFace'> (I) </a> */}
                             <img src='./info.png' data-tip data-for='happyFace' style={{width:'1.2em', margin:'0.5em'}}></img>

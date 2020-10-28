@@ -376,8 +376,8 @@ def get_wash_trades():
     coin = request.args.get('coin')
     exchange = request.args.get('exchange')
 
-    # from_time = request.args.get('from_time')
-    # to_time = request.args.get('to_time')
+    from_time = request.args.get('from_time')
+    to_time = request.args.get('to_time')
 
     best_bid_x_values = []
     best_bid_y_values = []
@@ -391,22 +391,26 @@ def get_wash_trades():
     binance_trades_y_values=[]
     
     # sample query with date range:
-    # select * from wash_trading_orders where local_time >= '2020-10-19 07:47' and local_time<='2020-10-19 7:50' and exchange='BW';
+    # select * from wash_trading_orders where local_time >= '2020-10-19 07:47' and 
+    # local_time<='2020-10-19 7:50' and exchange='BW';
 
     # ADD date range to query
     get_trades_query = f'''
-    SELECT * FROM wash_trading_trades WHERE coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
+    SELECT * FROM wash_trading_trades WHERE local_time >= '{from_time}' and local_time<='{to_time}' and coin='{coin}' and 
+    exchange='{exchange}' ORDER BY local_time
     '''
     trades_sample = pd.read_sql(get_trades_query, conn)
     print("trades df is: ", trades_sample)
     
     # ADD date range to query: books sample
     get_books_query = f'''
-    SELECT * FROM wash_trading_orders WHERE coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
+    SELECT * FROM wash_trading_orders WHERE local_time >= '{from_time}' and local_time<='{to_time}' and 
+    coin='{coin}' and exchange='{exchange}' ORDER BY local_time 
     '''
     books_sample = pd.read_sql(get_books_query, conn)
     print("books df is:", books_sample)
     print("column names:", books_sample.columns)
+
     books_sample = books_sample[(books_sample['local_time'] > trades_sample['local_time'].min()) & (books_sample['local_time'] < trades_sample['local_time'].max())]
 
     print("books-sample is: ", books_sample) #this is empty for eos-btc trading pair
