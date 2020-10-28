@@ -16,3 +16,15 @@ Max date for these is 2020-10-23 10:06 -> first runs time frame
 
 2nd Script Runs:
     - Run after demo just because it could be dangerous
+
+BW Data: 
+    from: 2020-10-28 05:27
+    to: 2020-10-28 06:27
+Binance Data:
+    from: 
+    to: 
+Lbank Data:
+    from:
+    to: 
+
+
