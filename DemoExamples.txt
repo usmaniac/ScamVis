@@ -2,7 +2,7 @@
 historical:
     navigate through dropdown of anomaly list (both line and candlestick modes)
     - coin 1: STORM-BTC
-    parameters: 
+        - parameters: 
         - 20% price increase
         - 120% volume increase
         (default values for everything else)
@@ -20,7 +20,7 @@ historical:
         - 150% volume
         - 5 minute interval
         - 1 hour window
-        - specify a date range as well
+        - 01/01/2019 - 15/05/2019
 
 Live Feed:
     - Example Case 1: QSP-BTC
@@ -31,4 +31,4 @@ Live Feed:
             price increase: 20%
             vol increase: 200% 
 
-    - Example Case 2 
+    - Example Case 2:
