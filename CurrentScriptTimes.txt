@@ -21,10 +21,10 @@ BW Data:
     from: 2020-10-28 05:27
     to: 2020-10-28 06:27
 Binance Data:
-    from: 
-    to: 
+    from: 2020-10-28 15:16
+    to: 2020-10-28 16:16
 Lbank Data:
-    from:
-    to: 
+    from: 2020-10-29 05:58
+    to: 2020-10-29 06:58
 
 
