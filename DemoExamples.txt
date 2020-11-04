@@ -30,5 +30,3 @@ Live Feed:
             coin: QSP-BTC
             price increase: 20%
             vol increase: 200% 
-
-    - Example Case 2:

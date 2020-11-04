@@ -342,6 +342,7 @@ def get_live_anomalies():
     print("dump_vol_thresh:", dump_vol_thresh)
 
     pump_or_not = False
+    # not sure if this correct logic
     if float(ra_vol_df.iloc[-1]['high']) >= float(p_thresh) * float(ra_vol_df.iloc[-1]['120m Close Price RA']) and float(ra_vol_df.iloc[-1]['volume']) >= float(v_thresh) * float(ra_vol_df.iloc[-1]['120m Volume RA']):
         pump_or_not = True
     if dump_price_thresh > 0:
@@ -499,6 +500,25 @@ def create_figure():
     
     return fig 
 
+
+
+@app.route('/trade_size.png')
+def trade_size_dist():
+    fig = create_trade_figure()
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
+
+
+def create_trade_figure():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.distplot(trades_sample['size'][trades_sample['size'] < 50000], bins=100)
+    plt.title(f'Trades size distribution for {coin} on {exchange}')
+    plt.xlabel(f'Size, {coin}')
+    return fig
+
+
+# Left out of visualising
 # Return multiple images = append to array
 @app.route('/buy_sell.png')
 def plot_buy_sell_png():
@@ -509,6 +529,8 @@ def plot_buy_sell_png():
 
 
 # discuss with Dilum, this endpoint doesn't always show data, relies on milliseconds between data
+# doesnt even make sense
+# alot of empty results (useless)
 def create_buy_sell_figure():
     # Sell Figures
     global coin
