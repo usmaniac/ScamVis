@@ -21,7 +21,7 @@ function WashTradingForm() {
     const [formCoin, setFormCoin] = useState('BSV_BTC')
     const {register, handleSubmit, errors} = useForm();
     // default values on startup are specified here
-    const [dateValueArray, onChangeDate] = useState([new Date(2020, 9, 19, 7, 47), new Date(2020, 9, 23, 11, 4)]);
+    const [dateValueArray, onChangeDate] = useState([new Date(2020, 9, 19, 7, 47), new Date(2020, 9, 24, 11, 4)]);
     const [currentExchange, setCurrentExchange] = useState('BW')
     const[results, setResults] = useState({
         best_bid_x_values: [],
@@ -59,6 +59,11 @@ function WashTradingForm() {
         console.log(currentExchange)
     }, [currentExchange])
     
+    useEffect(() => {
+        console.log("date changed to: ", dateValueArray)
+    }, [dateValueArray])
+
+
     // On start up
     useEffect(() => {
         async function onStartUp(){
@@ -86,8 +91,7 @@ function WashTradingForm() {
         console.log("data object returned from the form is: ", data)    
         // carry out API calls here and set results state
         // need this to take in the coin that we want
-        let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}
-        &from_time=2020-10-19 07:47&to_time= 2020-10-23 11:04`)
+        let x = await axios.get(`http://127.0.0.1:5000/wash_trading_graphs?coin=${formCoin}&exchange=${currentExchange}&from_time=${dateValueArray[0].toISOString()}&to_time=${dateValueArray[1].toISOString()}`)
         let x2 = await Promise.resolve(x)
         setResults({
             best_bid_x_values: x2.data.best_bid_x_values,
