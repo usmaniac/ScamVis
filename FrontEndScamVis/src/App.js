@@ -31,10 +31,7 @@ function App() {
   async function handleRadioChangeValue(event){
     console.log("scam is: ", event.currentTarget.value)
     let value = event.currentTarget.value
-    if(value === "spoofing"){
-       setCurrentScam("spoofing")
-    }
-    else if(value === "wash_trading"){
+    if(value === "wash_trading"){
       setCurrentScam("wash_trading")
     } 
     else {
@@ -51,7 +48,6 @@ function App() {
         <b>Scam Select:&nbsp;</b>
         <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} /> Pump and Dump &nbsp;
         <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}} defaultChecked/> Wash Trading &nbsp;
-        <input onChange={handleRadioChangeValue} type="radio" value="spoofing" name="scam" style={{display:'inline'}} /> Spoofing
       </div>
       {element_to_render}
     </div>

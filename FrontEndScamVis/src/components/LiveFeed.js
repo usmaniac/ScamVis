@@ -65,7 +65,7 @@ let dataSource = {
           type: "column"
         }
       ],
-      max: "90000000"
+      max: "900000"
     }
   ],
   navigator: {
