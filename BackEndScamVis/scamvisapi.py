@@ -455,7 +455,37 @@ def get_wash_trades():
         binance_trades_y_values = trades_sample['price'].to_numpy().tolist()
 
         print("binance trades here is: ", binance_trades_x_values)
-       
+
+
+
+    # statistics for trading
+    trades_seq = trades_sample[['local_time', 'price', 'size']].set_index('local_time', drop=True)
+    trades_mid_diff = pd.concat([trades_seq, best_bid]).rename(columns={0: 'best_bid'}).sort_index()
+    trades_mid_diff = pd.concat([trades_mid_diff, best_ask]).rename(columns={0: 'best_ask'}).sort_index()
+
+    # Calculating price delta
+    trades_mid_diff.loc[:, ['best_bid', 'best_ask']] = trades_mid_diff[['best_bid', 'best_ask']].ffill()
+    trades_mid_diff.dropna(inplace=True)
+    midprice = (trades_mid_diff['best_ask'] + trades_mid_diff['best_bid']) / 2
+    spread = trades_mid_diff['best_ask'] - trades_mid_diff['best_bid']
+    trades_mid_diff['price_delt'] = (midprice - trades_mid_diff['price']) / spread
+    
+    # final stats
+    count = trades_mid_diff.shape[0]
+    in_count = trades_mid_diff[trades_mid_diff['price_delt'].abs() < 0.49].shape[0]
+    volume = trades_mid_diff['size'].abs().sum()
+    in_volume = trades_mid_diff[trades_mid_diff['price_delt'].abs() < 0.49]['size'].abs().sum()
+
+    stats = {
+        'Trades Total': count, 
+        'In-spread Trades': in_count,
+        'Total Volume': volume,
+        'In-spread Volume': in_volume,
+        'In-spread Volume, %': in_volume / volume * 100
+    }
+
+    print("stats are: ", stats) 
+
     return json.dumps({
         'best_bid_x_values': best_bid_x_values,
         'best_bid_y_values': best_bid_y_values,
@@ -468,6 +498,7 @@ def get_wash_trades():
         'binance_trades_x_values': binance_trades_x_values,
         'binance_trades_y_values': binance_trades_y_values,
         'symbol': coin,
+        'stats': stats
     })
 
 @app.route('/plot.png')

@@ -43,7 +43,8 @@ let dataSource = {
   chart: {
     exportenabled: 1,
     multicanvas: false,
-    theme: "candy"
+    theme: "candy",
+    // plotSpacePercent: "30",
   },
   yaxis: [
     {

@@ -10,7 +10,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function App() {
-  const [currentScam, setCurrentScam] = useState("wash_trading")  // CHANGE THIS BACK LATER
+  const [currentScam, setCurrentScam] = useState("pump_and_dump")  // CHANGE THIS BACK LATER
 
   useEffect(() => {
     console.log("current scam", currentScam)
@@ -46,8 +46,8 @@ function App() {
       <Title/>
       <div style={{position:'absolute', top:'145px', left:'40px', fontSize:'1.5rem'}}>
         <b>Scam Select:&nbsp;</b>
-        <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} /> Pump and Dump &nbsp;
-        <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}} defaultChecked/> Wash Trading &nbsp;
+        <input onChange={handleRadioChangeValue} type="radio" value="pump_and_dump" name="scam" style={{display:'inline'}} defaultChecked/> Pump and Dump &nbsp;
+        <input onChange={handleRadioChangeValue} type="radio" value="wash_trading" name="scam" style={{display:'inline'}} /> Wash Trading &nbsp;
       </div>
       {element_to_render}
     </div>

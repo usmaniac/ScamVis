@@ -4,6 +4,8 @@ import TimeSeries from "fusioncharts/fusioncharts.timeseries";
 import ReactFC from "react-fusioncharts";
 import axios from 'axios'
 import { Accordion, Card, Button } from 'react-bootstrap';
+import one_mindata from '../1mindata.json'
+
 
 
 ReactFC.fcRoot(FusionCharts, TimeSeries);
@@ -38,7 +40,7 @@ let dataSource = {
   chart: {
     exportenabled: 1,
     multicanvas: false,
-    theme: "candy"
+    theme: "candy",
   },
   yaxis: [
     {
@@ -81,7 +83,6 @@ const vizProperties = {
   dataSource : {}
 }
 
-
 const useInterval = (callback, delay) => {
   const savedCallback = useRef();
 
@@ -107,7 +108,7 @@ function delay(ms) {
 }
 
 function LiveFeed(props) {
-  const [intervalTime, setIntervalTime] = useState(8000);  // don't forget about default i.e starting wait time
+  const [intervalTime, setIntervalTime] = useState(5000);  // don't forget about default i.e starting wait time
   const[value, setValue] = useState(0)
 
   const[api_data, set_api_data] = useState({
@@ -116,7 +117,6 @@ function LiveFeed(props) {
     v_thresh_ra: 0,
     pump_or_not: String(false)
   })
-
   const[price_and_vol, set_price_and_vol] = useState({
     c_price:0,
     c_volume:0
@@ -128,14 +128,55 @@ function LiveFeed(props) {
   })
 
   useEffect(() => {
-    console.log("data returned to us is:", props.results)
-    setParameters({
-      priceParam: props.priceParam/100 + 1,
-      volumeParam: props.volumeParam/100
+    // console.log("data returned to us is:", props.results
+    async function onStart(){
+    console.log("performing on start function")
+    // let x = await axios.get(`http://127.0.0.1:5000/live_feed?p_thresh=${parameters.priceParam}&v_thresh=${parameters.volumeParam}&coin=${props.coin}&interval=1`)
+    // let x2 = await Promise.resolve(x)
+    // console.log(x2)
+    console.log(value)
+    set_api_data({
+      data: one_mindata,
+      p_thresh_ra: 0,
+      v_thresh_ra: 0,
+      pump_or_not: String(false)
     })
-    dataSource.caption.text = `${props.coin} Price`
+    set_price_and_vol({
+      c_price: 0,
+      c_volume: 0
+    })
+    let fusionTable = new FusionCharts.DataStore().createDataTable(one_mindata,schemaTop);
+    let timeseriesDs = Object.assign({}, vizProperties);
+    timeseriesDs.dataSource = dataSource
 
-  }, [props.coin, props.results, props.priceParam, props.volumeParam])
+    // timeseriesDs.dataSource.caption.text = `${props.coin} Price`
+    timeseriesDs.dataSource.data = fusionTable;
+    timeseriesDs.dataSource.yaxis[0]['plot'] = 
+    [
+      {
+        value: {
+          open: "Open",
+          high: "High",
+          low: "Low",
+          close: "Close"
+        },
+        type: "candlestick"
+      }
+    ]
+
+    setState_timeseries({
+      timeSeriesList: [timeseriesDs]
+    });
+    
+    if(api_data.pump_or_not == String(true)){
+      setBorderColour('red')
+    } else {
+      setBorderColour('green')
+    }
+
+    }
+    onStart()
+  }, [])
 
 
   const [state_timeseries, setState_timeseries] = useState({
@@ -145,10 +186,6 @@ function LiveFeed(props) {
     // Do some API call here ie in setTimeout
     console.log("interval time is(if null we are on pause):", intervalTime)
     setValue(value+1)
-    // setTimeout(() => {
-    //   // console.log('API call');
-    //   console.log(value)
-    // }, 500); // after 500ms carry out the function
     async function doRequests() {
       // eventual query: 
       let x = await axios.get(`http://127.0.0.1:5000/live_feed?p_thresh=${parameters.priceParam}&v_thresh=${parameters.volumeParam}&coin=${props.coin}&interval=1`)
@@ -165,20 +202,8 @@ function LiveFeed(props) {
         c_price: x2.data.visualisation_data[29][2],
         c_volume: x2.data.visualisation_data[29][5]
       })
-      // if(api_data.pump_or_not == String(true)){
-      //   setBorderColour('red')
-      // } else {
-      //   setBorderColour('green')
-      // }
-    }
-    doRequests()
-  }, intervalTime);
-
-  useEffect(() => {
-    async function onFetchData() {
-      let timeseriesDs
       let fusionTable = new FusionCharts.DataStore().createDataTable(api_data.data,schemaTop);
-      timeseriesDs = Object.assign({}, vizProperties);
+      let timeseriesDs = Object.assign({}, vizProperties);
       timeseriesDs.dataSource = dataSource
 
       // timeseriesDs.dataSource.caption.text = `${props.coin} Price`
@@ -207,9 +232,9 @@ function LiveFeed(props) {
       }
 
     }
+    doRequests()
+  }, intervalTime);
 
-    onFetchData();
-  }, [api_data]); 
 
   let fincomponent 
   if(state_timeseries.timeSeriesList.length > 0){
@@ -224,7 +249,7 @@ function LiveFeed(props) {
     console.log("i am not sending data")
     fincomponent = (
         <div> 
-          Live data stream not set up yet       
+          Live data stream not detected     
         </div>
     )
   } 
@@ -237,7 +262,7 @@ function LiveFeed(props) {
           <Card style={{marginLeft:'100em', width:'55em', marginBottom:'0.5em', border:`solid ${borderColour}`}}>
               <Card.Body >
                 <div className="interval_timers">
-                  <button onClick={() => setIntervalTime(8000)}>Start live data feed </button>
+                  <button onClick={() => setIntervalTime(5000)}>Start live data feed </button>
                   <button onClick={() => setIntervalTime(null)}>Stop interval live data feed </button>
                 </div>
                 <div className='details' style={{fontSize:'1.5em'}}>
