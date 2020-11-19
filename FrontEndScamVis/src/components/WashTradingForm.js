@@ -34,6 +34,7 @@ function WashTradingForm() {
         market_sell_y_values: [],
         binance_trades_x_values: [],
         binance_trades_y_values: [],
+        stats: {},
         symbol: 'BSV_BTC'
     })
     
@@ -80,6 +81,7 @@ function WashTradingForm() {
                 market_sell_y_values: x2.data.market_sell_y_values,
                 binance_trades_x_values: x2.data.binance_trades_x_values,
                 binance_trades_y_values: x2.data.binance_trades_y_values,
+                stats: x2.data.stats,
                 symbol: x2.data.symbol
             })
         }
@@ -104,6 +106,7 @@ function WashTradingForm() {
             market_sell_y_values: x2.data.market_sell_y_values,
             binance_trades_x_values: x2.data.binance_trades_x_values,
             binance_trades_y_values: x2.data.binance_trades_y_values,
+            stats: x2.data.stats,
             symbol: x2.data.symbol
         })
     }
@@ -197,7 +200,6 @@ function WashTradingForm() {
             </Modal.Body>
         </Modal>
 
-        {/* <WashingVisuals key={formCoin} results={results} coin={formCoin} dates={dateValueArray}></WashingVisuals> */}
         {elementToRender}
         </>
     )
