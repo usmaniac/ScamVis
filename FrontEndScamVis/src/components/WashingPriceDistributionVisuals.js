@@ -1,6 +1,6 @@
 import React, { useEffect,useState } from 'react'
 import {Modal, Button, Row} from 'react-bootstrap'
-import '../modal.css';
+// import './modal.module.css';
 import axios from 'axios'
 
 function WashingPriceDistributionVisuals(props) {
