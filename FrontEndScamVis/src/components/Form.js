@@ -30,7 +30,8 @@ function Form() {
         priceParam:'30',
         volumeParam: '400',
         live_or_historical: 'historical',
-        interval: '15'  
+        interval: '15',
+        windowSize: '120'  
     })
 
     const [disabled, set_disabled] = useState({
@@ -76,7 +77,7 @@ function Form() {
 
         if(data.live_or_historical == "live"){
             // call api continuously in componenent not here
-            setState({ coin:formCoin, priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval }) 
+            setState({ coin:formCoin, priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval, windowSize:'120' }) 
         }
         // historical case
         else {
@@ -86,14 +87,14 @@ function Form() {
                 let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}&from_time=${dateValueArray[0]}&to_time=${dateValueArray[1]}`) 
                 let x2 = await Promise.resolve(x)
                 setState({ coin:formCoin, results:x2.data.results, 
-                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval, windowSize:data.win_size })  
             }
 
             else {
             let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${formCoin}&interval=${data.interval}&win_size=${data.win_size}`)
             let x2 = await Promise.resolve(x)
             setState({ coin:formCoin, results:x2.data.results, 
-                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval })  
+                priceParam:percentage, volumeParam: data.Volume, live_or_historical:data.live_or_historical, interval: data.interval, windowSize:data.win_size })  
             }
         }
         
@@ -254,7 +255,7 @@ function Form() {
         {/* render only on live mode*/}
         { state.live_or_historical === "historical" ? (
             <PdVisuals key={state.results} results={state.results} coin={state.coin}
-            priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval}></PdVisuals>
+            priceParam={state.priceParam} volumeParam={state.volumeParam} dates={dateValueArray} interval={state.interval} windowSize={state.windowSize}></PdVisuals>
         ) : (
             <LiveFeed coin={state.coin} priceParam={state.priceParam} volumeParam={state.volumeParam}></LiveFeed> //new component without the anomaly list
         )
