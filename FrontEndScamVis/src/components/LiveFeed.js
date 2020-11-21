@@ -110,6 +110,15 @@ function delay(ms) {
 function LiveFeed(props) {
   const [intervalTime, setIntervalTime] = useState(5000);  // don't forget about default i.e starting wait time
   const[value, setValue] = useState(0)
+  
+  // const [shade, setshade] = useState('rgba(0, 255, 0, 0.3)')
+  // const[borderColour, setBorderColour] = useState('green')
+
+  const[borderStyles, setBorderStyles] = useState({
+    backgroundColor:'rgba(0, 255, 0, 0.3)',
+    borderColour:'green'
+  })
+
 
   const[api_data, set_api_data] = useState({
     data: [],
@@ -121,7 +130,7 @@ function LiveFeed(props) {
     c_price:0,
     c_volume:0
   })
-  const[borderColour, setBorderColour] = useState('green')
+  
   const [parameters, setParameters] = useState({
     priceParam: 1.2,
     volumeParam: 2
@@ -169,9 +178,19 @@ function LiveFeed(props) {
     });
     
     if(api_data.pump_or_not == String(true)){
-      setBorderColour('red')
+      // setBorderColour('red')
+      // setshade('rgba(255, 0, 0, 0.376)')
+      setBorderStyles({
+        backgroundColor: '#FF000060',
+        borderColour: 'red'
+      })
     } else {
-      setBorderColour('green')
+      // setBorderColour('')
+      // setshade('rgba(0, 255, 0, 0.3)')
+      setBorderStyles({
+        backgroundColor: 'rgba(0, 255, 0, 0.3)',
+        borderColour: 'green'
+      })
     }
 
     }
@@ -226,9 +245,17 @@ function LiveFeed(props) {
       });
       
       if(api_data.pump_or_not == String(true)){
-        setBorderColour('red')
+        // setBorderColour('red')
+        setBorderStyles({
+          backgroundColor: '#FF000060',
+          borderColour: 'red'
+        })
       } else {
-        setBorderColour('green')
+        // setBorderColour('green')
+        setBorderStyles({
+          backgroundColor: 'rgba(0, 255, 0, 0.3)',
+          borderColour: 'green'
+        })
       }
 
     }
@@ -259,7 +286,7 @@ function LiveFeed(props) {
     <React.Fragment>
       
         {/* <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}> */}
-          <Card style={{marginLeft:'100em', width:'55em', marginBottom:'0.5em', border:`solid ${borderColour}`}}>
+          <Card style={{marginLeft:'80em', width:'55em', marginBottom:'0.5em', border:`solid ${borderStyles.borderColour}`, backgroundColor:`${borderStyles.backgroundColor}`}}>
               <Card.Body >
                 <div className="interval_timers">
                   <button onClick={() => setIntervalTime(5000)}>Start live data feed </button>
