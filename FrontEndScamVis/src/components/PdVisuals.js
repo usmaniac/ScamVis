@@ -7,7 +7,7 @@ import ReactFC from "react-fusioncharts";
 import usmanTempData from '../usmanTempData.json'
 import one_mindata from '../1mindata.json'
 import thirty_min_data from '../30mindata.json'
-import { Accordion, Card, Button } from 'react-bootstrap';
+import { Accordion, Card, Button, Modal } from 'react-bootstrap';
 
 ReactFC.fcRoot(FusionCharts, TimeSeries);
 
@@ -100,6 +100,10 @@ function PdVisuals(props) {
     useEffect(() => {
       console.log("data returned to us is:", props.results)
     }, [props.results])
+    
+    const [show, setShow] = useState(false);
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
 
     const [state, setState] = useState({
         timeSeriesList: [], 
@@ -240,7 +244,7 @@ function PdVisuals(props) {
     <div> 
       
       <div class="box" style={{fontSize:'1.5em', marginLeft:'70em', paddingLeft:'4.5em', paddingRight:'4.5em'}}>
-        <Accordion defaultActiveKey="1" style={{float:'left', width:'70%', marginTop:'0.25em'}}>
+        {/* <Accordion defaultActiveKey="1" style={{float:'left', width:'70%', marginTop:'0.25em'}}>
         <Card>
           <Card.Header style={{padding:'0'}}>
             <Accordion.Toggle as={Button} variant="link" eventKey="0" style={{fontSize:'0.9em'}}>
@@ -257,7 +261,37 @@ function PdVisuals(props) {
             </Card.Body>
           </Accordion.Collapse>
         </Card>
-        </Accordion>
+        </Accordion> */}
+        
+          <Button variant="info" onClick={handleShow}  style={{float:'left', width:'70%', marginTop:'0.4em'}}>
+          See parameters
+          </Button>
+          <div>
+          <Modal centered style={{opacity:1}} show={show} onHide={handleClose}>
+            <Modal.Header closeButton>
+              <Modal.Title>Input Parameters</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div style={{fontSize:'2em'}}>
+              <div> <b>Coin: </b> { props.coin} </div>
+              <div> <b> Date Range:</b> From {props.dates[0].toString().replace("Australian Eastern Daylight Time", "AEDT")} to {props.dates[1].toString().replace("Australian Eastern Standard Time", "AEST")}</div>
+              <div> <b> Price Increase: </b>  {props.priceParam}%</div>
+              <div> <b> Volume Increase: </b>  {props.volumeParam}%</div>
+              <div> <b>  Interval: </b> {props.interval} minutes </div>
+              <div> <b>  Window Size: </b> {props.windowSize} minutes </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button variant="primary" onClick={handleClose}>
+                Save Changes
+              </Button>
+            </Modal.Footer>
+        </Modal>
+        </div>
+        
 
         <div style={{float:'left', fontSize:'0.95em', width:'30%', height:'100%', padding:'.75rem 1.15rem'}} >
           <select className="browser-default custom-select" style={{fontSize:'0.95em'}} onChange={e => setStyle(e.currentTarget.value)}>
@@ -267,7 +301,7 @@ function PdVisuals(props) {
           </select>
         </div>
         
-        <div style={{position:'absolute', left:'48em', top:'145px', fontSize:'1.1em'}}> Anomaly List: </div>
+        <div style={{position:'absolute', left:'48em', top:'145px', fontSize:'1.1em', marginTop:'0.3em'}}> Anomaly List: </div>
 
         <select className="browser-default custom-select" onChange={  e => setSelected(e.currentTarget.value) } style={{position:'absolute', left:'55em', top:'145px', fontSize:'1.1em', width:'12%'}}>
           {items && items.map(item => (
