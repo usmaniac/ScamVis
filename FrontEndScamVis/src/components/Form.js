@@ -62,7 +62,7 @@ function Form() {
         let x = await axios.get(`http://127.0.0.1:5000/anomalies?p_thresh=${newPriceThresh}&v_thresh=${newVolume}&coin=${state.coin}&interval=15&win_size=120`)
         let x2 = await Promise.resolve(x)
         setState({ coin:state.coin, results:x2.data.results, 
-            priceParam:percentage, volumeParam: state.volumeParam, live_or_historical: 'historical', interval: state.interval  })
+            priceParam:percentage, volumeParam: state.volumeParam, live_or_historical: 'historical', interval: state.interval, windowSize: state.windowSize })
         }
         onStartup()
     }, [])
