@@ -116,7 +116,8 @@ function LiveFeed(props) {
 
   const[borderStyles, setBorderStyles] = useState({
     backgroundColor:'rgba(0, 255, 0, 0.3)',
-    borderColour:'green'
+    borderColour:'green',
+    img_src: './check.png'
   })
 
 
@@ -182,14 +183,16 @@ function LiveFeed(props) {
       // setshade('rgba(255, 0, 0, 0.376)')
       setBorderStyles({
         backgroundColor: '#FF000060',
-        borderColour: 'red'
+        borderColour: 'red',
+        img_src:'./warning.png'
       })
     } else {
       // setBorderColour('')
       // setshade('rgba(0, 255, 0, 0.3)')
       setBorderStyles({
         backgroundColor: 'rgba(0, 255, 0, 0.3)',
-        borderColour: 'green'
+        borderColour: 'green',
+        img_src:'./check.png'
       })
     }
 
@@ -244,17 +247,19 @@ function LiveFeed(props) {
         timeSeriesList: [timeseriesDs]
       });
       
-      if(api_data.pump_or_not == String(true)){
+      if(x2.data.pump_or_not == true){
         // setBorderColour('red')
         setBorderStyles({
           backgroundColor: '#FF000060',
-          borderColour: 'red'
+          borderColour: 'red',
+          img_src:'./warning.png'
         })
       } else {
         // setBorderColour('green')
         setBorderStyles({
           backgroundColor: 'rgba(0, 255, 0, 0.3)',
-          borderColour: 'green'
+          borderColour: 'green',
+          img_src:'./check.png'
         })
       }
 
@@ -292,13 +297,15 @@ function LiveFeed(props) {
                   <button onClick={() => setIntervalTime(5000)}>Start live data feed </button>
                   <button onClick={() => setIntervalTime(null)}>Stop interval live data feed </button>
                 </div>
+                {/* this will change depending on state */}
+                <img src={borderStyles.img_src} style={{maxWidth:'60%', maxHeight:'90px', float:'right'}}></img>
                 <div className='details' style={{fontSize:'1.5em'}}>
                   <div> <b>Coin:</b>{props.coin} </div>
                   <div> <b>Price Threshold:</b> {props.priceParam}  </div>
                   <div> <b>Volume Threshold:</b> {props.volumeParam} </div>
                   <div> <b>RA Price:</b> {api_data.p_thresh_ra.toExponential(3)}  <b>Current Price (High):</b> {price_and_vol.c_price.toExponential(3)}</div> 
                   <div> <b>RA Volume:</b> {api_data.v_thresh_ra.toExponential(3)} <b> Current Volume:</b> {price_and_vol.c_volume} </div>   
-                  <div> <b>Pump Status: </b> {api_data.pump_or_not} </div>
+                  <div> <b>Status: </b> {api_data.pump_or_not == "false" ? 'OK': 'Pump Detected'} </div>
                 </div>
               </Card.Body>
           </Card>
