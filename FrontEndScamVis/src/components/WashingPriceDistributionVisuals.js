@@ -19,7 +19,7 @@ function WashingPriceDistributionVisuals(props) {
 
     return (
         <>
-        <Button variant="info" onClick={handleShow}  style={{fontSize:'1.5em', position:'absolute', left:'16px', top:'20em', height:'9em', whiteSpace:'pre-wrap', width:'10em'}}>
+        <Button variant="info" onClick={handleShow}  style={{fontSize:'1.5em', position:'absolute', right:'4em', top:'20em', height:'6em', whiteSpace:'pre-wrap', width:'10em'}}>
             Click to learn how to interpret the graph
         </Button>
         <div>
@@ -29,8 +29,14 @@ function WashingPriceDistributionVisuals(props) {
                 </Modal.Header>
                 <Modal.Body style={{fontSize:'1.3em'}}>
                     {/* Placeholder: Put down stats in this area */}
-                    Insert image and information about how to interpret the graph
                     <img style={{maxWidth:'100%', maxHeight:'100%'}} src='./exampleDistribution.png'></img>
+                    <Row style={{paddingLeft:'2em', paddingRight:'2em', display:'initial', fontSize:'1.3em' }}>
+                        <b>Two modal distribution: </b> Legitimate trading should display the above two modal distribution (i.e two humps). Anything 
+                        outside of this distribution can be considered fraudulent.
+                        The x-axis represents the price-delta (change in price) compared to the mid-price, and the y-axis reflects the density at each point. 
+                        Two modes/humps represent one mode for trades at mid-price
+                        and another mode for trades at ask price.
+                    </Row>
                 </Modal.Body>
         </Modal>
         </div>
