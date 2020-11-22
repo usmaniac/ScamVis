@@ -29,22 +29,31 @@ function WashingVisuals(props) {
     const [show, setShow] = useState(false);
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);  
+
+    const [interpret_show, setInterpretationShow] = useState(false);
+    const handleInterpretationClose = () => setInterpretationShow(false);
+    const handleInterpretationShow = () => setInterpretationShow(true);  
+
+
+
     const [dangerState, setDangerState] = useState("danger")
     // const [modalText, setModalText] = useState("High Levels of wash trading, click to see stats")
     let textToRender
+    let imgToRender
     let modalDanger
     if(dangerState== "danger"){
-        textToRender  = ["High Levels of Wash Trading Detected!",
+        textToRender  = ["Wash Trading: Critical!",
         <br/>,
         "Click to see stats"]
         modalDanger = "dangerous"
-
+        imgToRender = './warning.png'
     }
     else{
-        textToRender = ["Negligible Levels of Wash Trading Detected",
+        textToRender = ["Wash Trading: Negligible",
         <br/>,
         "Click to see stats"]
         modalDanger = "negligible"
+        imgToRender = './check.png'
     }
 
     let trace0 = {
@@ -157,14 +166,32 @@ function WashingVisuals(props) {
             zeroline: false
         },
         width: 1200, 
-        height: 700
+        height: 700,
+        legend: {x: -0.2, y: 0.8}
     }
 
     return (
         <>
-        <Button variant={dangerState} onClick={handleShow}  style={{fontSize:'1.5em', position:'absolute', left:'16px', top:'20em', height:'9em', whiteSpace:'pre-wrap', width:'10em'}}>
+        <Button variant={dangerState} onClick={handleShow}  style={{fontSize:'1.5em', position:'absolute', right:'4em', top:'20em', height:'12em', whiteSpace:'pre-wrap', width:'10em'}}>
+            <img src={imgToRender} style={{maxWidth:'100%', maxHeight:'60px'}}></img>
+            <div></div>
             {textToRender}
         </Button>
+
+        <Button variant="info" onClick={handleInterpretationShow}  style={{fontSize:'1.5em', position:'absolute', right:'4em', top:'33em', height:'6em', whiteSpace:'pre-wrap', width:'10em'}}>
+            Click to learn how to interpret the graph
+        </Button>
+
+        <Modal style={{opacity:1}} show={interpret_show} onHide={handleInterpretationClose}>
+                <Modal.Header closeButton>
+                <Modal.Title style={{fontSize:'2em'}}> Wash Trading Graph Interpretation </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <img style={{maxWidth:'100%', maxHeight:'100%'}} src='./washhelp.png'></img>
+                </Modal.Body>
+        </Modal>
+
+
         <Modal style={{opacity:1}} show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                 <Modal.Title style={{fontSize:'2em'}}> Wash Trading Statistics </Modal.Title>
@@ -200,7 +227,7 @@ function WashingVisuals(props) {
                 </Modal.Body>
         </Modal>
 
-        <Plot
+        <Plot style={{right:'5em'}}
         data={data}
         layout={layout}
         />
